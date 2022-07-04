@@ -62,10 +62,14 @@ def write_keyvalue(file_path="tmp/file.json", key="keyname", value=None):
 # (END) GENERAL FUNCTION
 
 
+# SPECIFIC FUNCTION
+
+# (END) SPECIFIC FUNCTION
+
 
 if __name__ == "__main__":
     # define certain obj for formatting
-    data_variation_obj = \
+    variation_rc_obj = \
     {
         "Rohm CpF": {
             "r": None,
@@ -82,12 +86,12 @@ if __name__ == "__main__":
     {
         "folder_path": [None],
         "variation": [None],
-        "iteration": None,
-
+        "num_variation": None,
+        "num_iteration": None
     }
 
     # initialization json files
-    write_obj_to_filejson(file_path="tmp/data_variation.json", obj=data_variation_obj)
+    write_obj_to_filejson(file_path="tmp/variation_rc.json", obj=variation_rc_obj)
     write_obj_to_filejson(file_path="tmp/overview.json", obj=overview_obj)
 
     print("Run json_function.py ... Done")

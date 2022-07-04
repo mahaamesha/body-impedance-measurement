@@ -1,9 +1,18 @@
 {
     "folder_path": [
-        null
+        "465ohm variasi C/",
+        "1003ohm variasi C/",
+        "1468ohm variasi C/"
     ],
     "variation": [
-        null
+        "1003ohm",
+        "1003ohm 10.57nF",
+        "1003ohm 150pF",
+        "1003ohm 180pF",
+        "1003ohm 3.83nF",
+        "1003ohm 5.53nF",
+        "1003ohm 90pF"
     ],
-    "iteration": null
+    "num_variation": 7,
+    "num_iteration": 5
 }

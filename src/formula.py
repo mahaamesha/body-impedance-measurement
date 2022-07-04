@@ -17,6 +17,11 @@ def calculate_z(r, xc):
     z = 1/ akar
     return z
 
+def calculate_phase(f, r, c):
+    param = 2 * math.pi * f * r * c
+    phase = -math.atan(param) * 180/math.pi     # convert to degree
+    return phase
+
 def calculate_error(ref, value):
     err = abs(value - ref) / abs(ref) * 100.00
     return err
