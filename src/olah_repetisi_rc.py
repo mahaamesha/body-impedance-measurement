@@ -15,7 +15,7 @@ for f in folder_path:
 # scan all files
 path, dirs, files = next(os.walk(folder_path[1]))
 # create empty list
-df_list = []
+dfs = []
 
 for file in files:
     print(file)
@@ -24,13 +24,13 @@ for file in files:
 # append datasets to the list
 for i in range(len(files)):
     temp_df = pd.read_csv(folder_path[1]+files[i])
-    df_list.append(temp_df)
+    dfs.append(temp_df)
 
-    print(df_list[i].head())
+    print(dfs[i].head())
 
 
 # CLEANING NaN
-for df in df_list:
+for df in dfs:
     # get the column list
     for col in df.columns:
         print(col)
