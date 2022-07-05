@@ -76,10 +76,13 @@ def initialize_tmp_files():
             "r": None,
             "c": None,
             "z_ref": None,
-            "z_eks": None,
+            "z_mid": [],
+            "z_mid_avg": None,
             "z_err": None,
             "phase_ref": None,
-            "phase_eks": None,
+            "phase_mid": [],
+            "phase_mid_avg": None,
+            "phase_err": None
         }
     }
 

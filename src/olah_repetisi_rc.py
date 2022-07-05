@@ -13,8 +13,7 @@ folder_path = folder_name.copy()
 fstart = 20e3
 fend = 50e3
 
-
-def process_analysis(folder_path_i, fstart=20e3, fend=50e3):
+def prepare_data(folder_path_i):
     # scan all files
     path, dirs, files = next(os.walk(folder_path_i))
 
@@ -38,7 +37,11 @@ def process_analysis(folder_path_i, fstart=20e3, fend=50e3):
         # "Magnitude" in index 5
         for i in range(len(column_list)):
             if i > 5: del df[column_list[i]]
+    
+    return files, dfs, dfs_list
 
+
+def preprocessing_rc_data(files):
     # extract the RC variation
     variation_str = []
     for f in files:
@@ -74,11 +77,15 @@ def process_analysis(folder_path_i, fstart=20e3, fend=50e3):
             variation_data[i].append(0)     # add value of C = 0
         for j in range(len(variation_data[i])):
             variation_data[i][j] = float(variation_data[i][j])
+    
+    return variation_str, variation_data
 
-    # theoritic
+
+def get_data_ref(variation_data, dfs_list, iteration):
+    # theoritic as reference
     fmid = calculate_fmid(fstart, fend)
-    arr_z = []
-    arr_phase = []
+    arr_z_ref = []
+    arr_phase_ref = []
     for i in range(len(variation_data)):
         r = variation_data[i][0]
         c = variation_data[i][1]
@@ -86,19 +93,45 @@ def process_analysis(folder_path_i, fstart=20e3, fend=50e3):
         z = calculate_z(r, xc)
         phase = calculate_phase(fmid, r, c)
 
-        arr_z.append(z)
-        arr_phase.append(phase)
+        arr_z_ref.append(z)
+        arr_phase_ref.append(phase)
 
     # calculate error Z
-    iteration = len(dfs) // len(variation_data)
-
     i = 0
     for df in dfs_list:
-        df["%Z"] = calculate_error(arr_z[i//iteration], df["Impedance"])
+        df["%Z"] = calculate_error(arr_z_ref[i//iteration], df["Impedance"])
         i += 1
 
+    return arr_z_ref, arr_phase_ref, dfs_list
 
+
+def get_data_mid(dfs_list, iteration):
+    # get z_mid & phase_mid from every dataframe. data_mid is data at fmid
+    # arr = [[...], [...], ...]
+    arr_z_mid = []
+    arr_phase_mid = []
+
+    nrows = len(dfs_list[0])
+    count = 0       # counting how many variation
+    for df in dfs_list:
+        idx = count // iteration
+        
+        # append new [] if need larger index
+        if len(arr_z_mid)-1 != idx:
+            arr_z_mid.append([])
+            arr_phase_mid.append([])
+        
+        arr_z_mid[idx].append( df["Impedance"][nrows//2] )
+        arr_phase_mid[idx].append( df["Phase"][nrows//2] )
+
+        count += 1
+
+    return arr_z_mid, arr_phase_mid, dfs_list
+
+
+def prepare_result_figure_folder(data_path):
     # prepare folder to save the figure
+    saved_dirname = ""
     for i in range(len(data_path)-1, 0, -1):
         if data_path[i] == "/":
             saved_dirname = data_path[i+1:len(data_path)] + "/"
@@ -109,29 +142,21 @@ def process_analysis(folder_path_i, fstart=20e3, fend=50e3):
         os.path.join("../media/", saved_dirname),
         os.path.join("media/", saved_dirname)
         ]
+    
     if not( os.path.isdir(path_option[0]) ):    # for notebook environment
         try: os.mkdir(path_option[0])
         except: pass
     if not( os.path.isdir(path_option[1]) ):  # for local python environment
         try: os.mkdir(path_option[1])
         except: pass
-    
-    # plot
-    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
-                    x_data="Frequency", y_data="%Z",
-                    x_label="Frequency (Hz)", y_label="Impedance Error (%)",
-                    suptitle_prefix="%Z vs f")
-    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
-                    x_data="Frequency", y_data="Impedance",
-                    x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
-                    suptitle_prefix="Impedance")
-    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
-                    x_data="Frequency", y_data="Phase",
-                    x_label="Frequency (Hz)", y_label="Phase (°)",
-                    suptitle_prefix="Phase")
 
+    return saved_dirname
+
+
+def update_variation_rc_json(variation_str, variation_data, 
+                            arr_z_ref, arr_phase_ref,
+                            arr_z_mid, arr_phase_mid):
     # save important information to json file
-
     file_path="tmp/variation_rc.json"
     variation_rc_obj = {}
     for i in range(len(variation_data)):
@@ -139,8 +164,10 @@ def process_analysis(folder_path_i, fstart=20e3, fend=50e3):
         
         variation_rc_obj[variation_str[i]]["r"] = variation_data[i][0]
         variation_rc_obj[variation_str[i]]["c"] = variation_data[i][1]
-        variation_rc_obj[variation_str[i]]["z_ref"] = arr_z[i]
-        variation_rc_obj[variation_str[i]]["phase_ref"] = arr_phase[i]
+        variation_rc_obj[variation_str[i]]["z_ref"] = arr_z_ref[i]
+        variation_rc_obj[variation_str[i]]["z_mid"] = arr_z_mid[i]
+        variation_rc_obj[variation_str[i]]["phase_ref"] = arr_phase_ref[i]
+        variation_rc_obj[variation_str[i]]["phase_mid"] = arr_phase_mid[i]
 
     # clear formatting in file json
     data = fjson.read_filejson(file_path)
@@ -152,6 +179,7 @@ def process_analysis(folder_path_i, fstart=20e3, fend=50e3):
     print("Writing", file_path, "... Done")
 
 
+def update_overview_json(files, iteration, variation_str):
     # save important information to json file
     file_path = "tmp/overview.json"
 
@@ -168,17 +196,45 @@ def process_analysis(folder_path_i, fstart=20e3, fend=50e3):
             if folder_name[i][j] == " " and count_space == 0:
                 arr_r_str.append( folder_name[i][:j] )
                 count_space += 1
-
     arr_c_str = []
     for i in range(len(variation_str)):
         for j in range(len(variation_str[i])):
             if variation_str[i][j] == " ":
                 arr_c_str.append( variation_str[i][j+1:] )
-
     fjson.write_keyvalue(file_path, "r_variation", arr_r_str)
     fjson.write_keyvalue(file_path, "c_variation", arr_c_str)
 
     print("Writing", file_path, "... Done")
+
+
+def process_analysis(folder_path_i):
+    files, dfs, dfs_list = prepare_data(folder_path_i)
+
+    variation_str, variation_data = preprocessing_rc_data(files)
+    
+    iteration = len(dfs_list) // len(variation_data)
+    arr_z_ref, arr_phase_ref, dfs_list = get_data_ref(variation_data, dfs_list, iteration)
+    arr_z_mid, arr_phase_mid, dfs_list = get_data_mid(dfs_list, iteration)
+
+    saved_dirname = prepare_result_figure_folder(data_path)
+    
+    # plot & save figure
+    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
+                    x_data="Frequency", y_data="%Z",
+                    x_label="Frequency (Hz)", y_label="Impedance Error (%)",
+                    suptitle_prefix="%Z vs f")
+    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
+                    x_data="Frequency", y_data="Impedance",
+                    x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
+                    suptitle_prefix="Impedance")
+    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
+                    x_data="Frequency", y_data="Phase",
+                    x_label="Frequency (Hz)", y_label="Phase (°)",
+                    suptitle_prefix="Phase")
+
+
+    update_variation_rc_json(variation_str, variation_data, arr_z_ref, arr_phase_ref, arr_z_mid, arr_phase_mid)
+    update_overview_json(files, iteration, variation_str)
 
 
 if __name__ == "__main__":
@@ -193,5 +249,5 @@ if __name__ == "__main__":
     # process analysis
     for idx in range(len(folder_path)):
         print("Processing %s ..." %folder_name[idx])
-        process_analysis(folder_path[idx], fstart=fstart, fend=fend)
+        process_analysis(folder_path[idx])
         print()
