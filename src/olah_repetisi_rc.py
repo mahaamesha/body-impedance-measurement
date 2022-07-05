@@ -1,4 +1,5 @@
 import os
+import shutil
 import pandas as pd
 
 from formula import *
@@ -98,17 +99,34 @@ def process_analysis(folder_path_i, fstart=20e3, fend=50e3):
         i += 1
 
 
+    # prepare folder to save the figure
+    for i in range(len(data_path)-1, 0, -1):
+        if data_path[i] == "/":
+            saved_dirname = data_path[i+1:len(data_path)] + "/"
+            break
 
+    # create directory
+    path_option = [
+        os.path.join("../media/", saved_dirname),
+        os.path.join("media/", saved_dirname)
+        ]
+    if not( os.path.isdir(path_option[0]) ):    # for notebook environment
+        try: os.mkdir(path_option[0])
+        except: pass
+    if not( os.path.isdir(path_option[1]) ):  # for local python environment
+        try: os.mkdir(path_option[1])
+        except: pass
+    
     # plot
-    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i,
+    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
                     x_data="Frequency", y_data="%Z",
                     x_label="Frequency (Hz)", y_label="Impedance Error (%)",
                     suptitle_prefix="%Z vs f")
-    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i,
+    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
                     x_data="Frequency", y_data="Impedance",
                     x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
                     suptitle_prefix="Impedance")
-    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i,
+    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
                     x_data="Frequency", y_data="Phase",
                     x_label="Frequency (Hz)", y_label="Phase (°)",
                     suptitle_prefix="Phase")

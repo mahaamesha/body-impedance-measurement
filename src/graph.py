@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import os
 
-def graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, 
+def graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname="",
                         x_data="Frequency", y_data="Impedance",
                         x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
                         suptitle_prefix="Impedance"):
@@ -41,11 +41,11 @@ def graph_per_variation(variation_str, iteration, dfs_list, folder_path_i,
 
     # save figure
     try:    # for notebook environment
-        save_path = os.path.join("../media/", suptitle_text + ".jpg")
+        save_path = os.path.join("../media/", saved_dirname, suptitle_text + ".jpg")
         fig.savefig(save_path)
         plt.show()
     except: # for local python environment
-        save_path = os.path.join("media/", suptitle_text + ".jpg")
+        save_path = os.path.join("media/", saved_dirname, suptitle_text + ".jpg")
         fig.savefig(save_path)
 
     print("Saving %s ... Done" %save_path)
