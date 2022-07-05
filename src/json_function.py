@@ -27,14 +27,19 @@ def write_obj_to_filejson(file_path="tmp/file.json", obj={}):
     with open(path, "a"):
         pass
     
-    if (obj == {}):
-        while True:
-            ans = input("Write empty obj to %s? (y/n) " %file_path)
-            if (ans == "y"): break
-            elif (ans == "n"): sys.exit("Canceled")
-
     with open(path, "w") as f:
         json.dump(obj, f, indent=4)
+
+
+# appending obj={} to dictionary that already exist
+def append_obj_to_filejson(file_path="tmp/file.json", obj={}):
+    path = os.path.join(project_path, file_path)
+
+    data = read_filejson(path)
+    data.update(obj)
+    
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4)
 
 
 # similar with write_obj_to_filejson, but only for clear file purpose
@@ -63,11 +68,7 @@ def write_keyvalue(file_path="tmp/file.json", key="keyname", value=None):
 
 
 # SPECIFIC FUNCTION
-
-# (END) SPECIFIC FUNCTION
-
-
-if __name__ == "__main__":
+def initialize_tmp_files():
     # define certain obj for formatting
     variation_rc_obj = \
     {
@@ -95,5 +96,13 @@ if __name__ == "__main__":
     # initialization json files
     write_obj_to_filejson(file_path="tmp/variation_rc.json", obj=variation_rc_obj)
     write_obj_to_filejson(file_path="tmp/overview.json", obj=overview_obj)
+
+    print("Initialize tmp files ... Done")
+
+# (END) SPECIFIC FUNCTION
+
+
+if __name__ == "__main__":
+    initialize_tmp_files()
 
     print("Run json_function.py ... Done")

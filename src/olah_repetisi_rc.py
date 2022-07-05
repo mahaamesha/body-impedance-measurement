@@ -143,7 +143,12 @@ def process_analysis(folder_path_i, fstart=20e3, fend=50e3):
         variation_rc_obj[variation_str[i]]["z_ref"] = arr_z[i]
         variation_rc_obj[variation_str[i]]["phase_ref"] = arr_phase[i]
 
-    fjson.write_obj_to_filejson(file_path, obj=variation_rc_obj)
+    # clear formatting in file json
+    data = fjson.read_filejson(file_path)
+    if len(data) <= 1:
+        fjson.write_obj_to_filejson(file_path, obj={})
+
+    fjson.append_obj_to_filejson(file_path, obj=variation_rc_obj)
 
     print("Writing", file_path, "... Done")
 
@@ -152,6 +157,7 @@ def process_analysis(folder_path_i, fstart=20e3, fend=50e3):
     file_path = "tmp/overview.json"
     overview_obj = fjson.read_filejson(file_path)
 
+    fjson.write_keyvalue(file_path, "sweep_frequency", [fstart, fend])
     fjson.write_keyvalue(file_path, "num_variation", len(files)//iteration)
     fjson.write_keyvalue(file_path, "num_iteration", iteration)
     fjson.write_keyvalue(file_path, "folder_path", folder_name)
@@ -183,6 +189,10 @@ if __name__ == "__main__":
         folder_path[i] = os.path.join(data_path, f)
         i += 1
 
+    # prepare tmp files
+    fjson.initialize_tmp_files()
+
+    # process analysis
     for idx in range(len(folder_path)):
         print("Processing %s ..." %folder_name[idx])
         process_analysis(folder_path[idx], fstart=fstart, fend=fend)
