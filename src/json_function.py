@@ -85,7 +85,9 @@ if __name__ == "__main__":
     overview_obj = \
     {
         "folder_path": [None],
-        "variation": [None],
+        "sweep_frequency": [None],
+        "r_variation": [None],
+        "c_variation": [None],
         "num_variation": None,
         "num_iteration": None
     }
