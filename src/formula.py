@@ -1,5 +1,22 @@
 import math
 
+
+# GENERAL FUNCTION ===================================
+def calculate_error(ref, value):
+    err = abs(value - ref) / abs(ref) * 100.00
+    return err
+
+def calculate_avg(arr=[]):
+    sum = 0
+    for n in arr:
+        sum += n
+    avg = sum / len(arr)
+    return avg
+
+# (END) GENERAL FUNCTION =============================
+
+
+# SPECIAL FUNTION ====================================
 def calculate_fmid(fstart, fend):
     fmid = (fstart + fend) / 2
     return fmid
@@ -21,10 +38,6 @@ def calculate_phase(f, r, c):
     phase = -math.atan(param) * 180/math.pi     # convert to degree
     return phase
 
-def calculate_error(ref, value):
-    err = abs(value - ref) / abs(ref) * 100.00
-    return err
-
 def calculate_r(z, phase):
     phase *= math.pi / 180      # convert to radian
     param = 1 + math.tan(phase)**2
@@ -36,3 +49,5 @@ def calculate_c(f, z, phase):
     param = 1 + 1/math.tan(phase)**2
     c = 1 / ( 2 * math.pi * f * z * math.sqrt(param) )
     return c
+
+# (END) SPECIAL FUNTION ==============================
