@@ -1,5 +1,4 @@
 import os
-import shutil
 import pandas as pd
 
 from formula import *
@@ -155,7 +154,6 @@ def process_analysis(folder_path_i, fstart=20e3, fend=50e3):
 
     # save important information to json file
     file_path = "tmp/overview.json"
-    overview_obj = fjson.read_filejson(file_path)
 
     fjson.write_keyvalue(file_path, "sweep_frequency", [fstart, fend])
     fjson.write_keyvalue(file_path, "num_variation", len(files)//iteration)
