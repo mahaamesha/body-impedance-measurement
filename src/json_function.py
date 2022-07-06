@@ -75,14 +75,26 @@ def initialize_tmp_files():
         "Rohm CpF": {
             "r": None,
             "c": None,
+
             "z_ref": None,
             "z_mid": [],
-            "z_mid_avg": None,
+            "z_avg": None,
             "z_err": None,
+
             "phase_ref": None,
             "phase_mid": [],
-            "phase_mid_avg": None,
-            "phase_err": None
+            "phase_avg": None,
+            "phase_err": None,
+            
+            "r_ref": None,
+            "r_avg": None,
+            "r_err_theoryref_measurement": None,
+            "r_err_theroyavg_measurement": None,
+
+            "c_ref": None,
+            "c_avg": None,
+            "c_err_theoryref_measurement": None,
+            "c_err_theoryavg_measurement": None
         }
     }
 
