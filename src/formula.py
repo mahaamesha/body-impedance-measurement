@@ -3,7 +3,10 @@ import math
 
 # GENERAL FUNCTION ===================================
 def calculate_error(ref, value):
-    err = abs(value - ref) / abs(ref) * 100.00
+    if abs(ref) == 0: 
+        err = math.inf
+    else:
+        err = abs(value - ref) / abs(ref) * 100.00
     return err
 
 def calculate_avg(arr=[]):
@@ -44,9 +47,12 @@ def calculate_r(z, phase):
     r = z * math.sqrt(param)
     return r
 
-def calculate_c(f, z, phase):
+def calculate_c(z, phase, f):
     phase *= math.pi / 180      # convert to radian
-    param = 1 + 1/math.tan(phase)**2
+    if abs(phase) == 0:
+        param = math.inf
+    else:
+        param = 1 + 1/math.tan(phase)**2
     c = 1 / ( 2 * math.pi * f * z * math.sqrt(param) )
     return c
 
