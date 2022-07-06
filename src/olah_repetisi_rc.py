@@ -153,9 +153,140 @@ def prepare_result_figure_folder(data_path):
     return saved_dirname
 
 
-def update_variation_rc_json(variation_str, variation_data, 
+def build_df_choosen(dfs_list, iteration):
+    # build new dataframe
+    # array of averaged dataframe from every iteration
+    df_choosen = []
+
+    for i in range(len(dfs_list) // iteration):     # iterate per num_of_variation
+        df_temp = dfs_list[0].copy(deep=True)
+        df_temp[:] = 0
+        
+        for j in range(iteration*i, iteration*(i+1)):
+            # print(i, j)
+            df_temp += dfs_list[j]
+
+        df_temp[:] /= iteration
+        df_choosen.append(df_temp)
+    
+    return df_choosen
+
+
+def get_z_phase_avg_from_df_choosen(df_choosen):
+    # save mid value from averaged_dataframe
+    # array to store mid value of z from every averaged_dataframe
+    arr_z_avg = []
+    arr_phase_avg = []
+
+    nrows = len(df_choosen[0])
+    for df in df_choosen:
+        arr_z_avg.append( df["Impedance"][nrows//2] )
+        arr_phase_avg.append( df["Phase"][nrows//2] )
+    
+    return arr_z_avg, arr_phase_avg
+
+
+def get_rc_theory(arr_z_avg, arr_phase_avg, fmid):
+    arr_r_theory = []
+    arr_c_theory = []
+
+    for i in range(len(arr_z_avg)):
+        r_theory = calculate_r(arr_z_avg[i], arr_phase_avg[i])
+        c_theory = calculate_c(arr_z_avg[i], arr_phase_avg[i], fmid)
+
+        arr_r_theory.append(r_theory)
+        arr_c_theory.append(c_theory)
+
+    return arr_r_theory, arr_c_theory
+
+
+def get_arr_err(arr_ref, arr_data):
+    arr_err = []
+
+    for i in range(len(arr_ref)):
+        err = calculate_error(arr_ref[i], arr_data[i])
+        arr_err.append(err)
+    
+    return arr_err
+
+
+def get_arr_rc_value(variation_data):
+    arr_r_value = []
+    arr_c_value = []
+
+    # variation_data = [[R1, C1], [R2, C2], ...]
+    for i in range(len(variation_data)):
+        r_value = variation_data[i][0]
+        c_value = variation_data[i][1]
+
+        arr_r_value.append(r_value)
+        arr_c_value.append(c_value)
+    
+    return arr_r_value, arr_c_value
+
+
+def get_arr_rc_str(variation_str):
+    # extract variation r and c
+    arr_r_str = []
+    for i in range(len(folder_name)):
+        count_space = 0
+        for j in range(len(folder_name[i])):
+            if folder_name[i][j] == " " and count_space == 0:
+                arr_r_str.append( folder_name[i][:j] )
+                count_space += 1
+    
+    arr_c_str = []
+    for i in range(len(variation_str)):
+        for j in range(len(variation_str[i])):
+            if variation_str[i][j] == " ":
+                arr_c_str.append( variation_str[i][j+1:] )
+
+    return arr_r_str, arr_c_str
+
+
+def get_rc_value_theoryavg_theoryref(arr_z_avg, arr_phase_avg, arr_z_ref, arr_phase_ref, variation_data):
+    # value of r and c from measurement
+    arr_r_value, arr_c_value = get_arr_rc_value(variation_data)
+    # array of r theory calculated from data: z_avg, phase_avg
+    arr_r_theory_avg, arr_c_theory_avg = get_rc_theory(arr_z_avg, arr_phase_avg, fmid=calculate_fmid(fstart, fend))
+    # array of r theory calculated from data: z_ref, phase_ref
+    arr_r_theory_ref, arr_c_theory_ref = get_rc_theory(arr_z_ref, arr_phase_ref, fmid=calculate_fmid(fstart, fend))
+
+    return arr_r_value, arr_c_value,\
+            arr_r_theory_avg, arr_c_theory_avg,\
+            arr_r_theory_ref, arr_c_theory_ref
+
+
+def get_arr_err_from_all_parameters(arr_z_ref, arr_z_avg, arr_phase_ref, arr_phase_avg, variation_data):
+    # calculate error of z and phase
+    arr_z_err = get_arr_err(arr_z_ref, arr_z_avg)
+    arr_phase_err = get_arr_err(arr_phase_ref, arr_phase_avg)
+
+    arr_r_value, arr_c_value,\
+        arr_r_theory_avg, arr_c_theory_avg,\
+        arr_r_theory_ref, arr_c_theory_ref = \
+        get_rc_value_theoryavg_theoryref(arr_z_avg, arr_phase_avg, arr_z_ref, arr_phase_ref, variation_data)
+
+    # calculate error of r and c
+    arr_rtheoryref_err = get_arr_err(arr_r_value, arr_r_theory_ref)
+    arr_ctheoryref_err = get_arr_err(arr_c_value, arr_c_theory_ref)
+    arr_rtheoryavg_err = get_arr_err(arr_r_value, arr_r_theory_avg)
+    arr_ctheoryavg_err = get_arr_err(arr_c_value, arr_c_theory_avg)
+
+    return arr_z_err, arr_phase_err,\
+            arr_rtheoryref_err, arr_ctheoryref_err,\
+            arr_rtheoryavg_err, arr_ctheoryavg_err
+
+
+def update_variation_rc_json(variation_str, variation_data,
                             arr_z_ref, arr_phase_ref,
-                            arr_z_mid, arr_phase_mid):
+                            arr_z_mid, arr_phase_mid,
+                            arr_z_avg, arr_phase_avg,
+                            arr_z_err, arr_phase_err,
+                            arr_r_theory_ref, arr_c_theory_ref,
+                            arr_r_theory_avg, arr_c_theory_avg,
+                            arr_rtheoryref_err, arr_ctheoryref_err,
+                            arr_rtheoryavg_err, arr_ctheoryavg_err):
     # save important information to json file
     file_path="tmp/variation_rc.json"
     variation_rc_obj = {}
@@ -166,8 +297,23 @@ def update_variation_rc_json(variation_str, variation_data,
         variation_rc_obj[variation_str[i]]["c"] = variation_data[i][1]
         variation_rc_obj[variation_str[i]]["z_ref"] = arr_z_ref[i]
         variation_rc_obj[variation_str[i]]["z_mid"] = arr_z_mid[i]
+        variation_rc_obj[variation_str[i]]["z_avg"] = arr_z_avg[i]
+        variation_rc_obj[variation_str[i]]["z_err"] = arr_z_err[i]
         variation_rc_obj[variation_str[i]]["phase_ref"] = arr_phase_ref[i]
         variation_rc_obj[variation_str[i]]["phase_mid"] = arr_phase_mid[i]
+        variation_rc_obj[variation_str[i]]["phase_avg"] = arr_phase_avg[i]
+        variation_rc_obj[variation_str[i]]["phase_err"] = arr_phase_err[i]
+
+        variation_rc_obj[variation_str[i]]["r_ref"] = arr_r_theory_ref[i]
+        variation_rc_obj[variation_str[i]]["r_avg"] = arr_r_theory_avg[i]
+        variation_rc_obj[variation_str[i]]["r_err_theoryref_measurement"] = arr_rtheoryref_err[i]
+        variation_rc_obj[variation_str[i]]["r_err_theoryavg_measurement"] = arr_rtheoryavg_err[i]
+        
+        variation_rc_obj[variation_str[i]]["c_ref"] = arr_c_theory_ref[i]
+        variation_rc_obj[variation_str[i]]["c_avg"] = arr_c_theory_avg[i]
+        variation_rc_obj[variation_str[i]]["c_err_theoryref_measurement"] = arr_ctheoryref_err[i]
+        variation_rc_obj[variation_str[i]]["c_err_theoryavg_measurement"] = arr_ctheoryavg_err[i]
+
 
     # clear formatting in file json
     data = fjson.read_filejson(file_path)
@@ -188,19 +334,7 @@ def update_overview_json(files, iteration, variation_str):
     fjson.write_keyvalue(file_path, "num_iteration", iteration)
     fjson.write_keyvalue(file_path, "folder_path", folder_name)
 
-    # extract variation r and c
-    arr_r_str = []
-    for i in range(len(folder_name)):
-        count_space = 0
-        for j in range(len(folder_name[i])):
-            if folder_name[i][j] == " " and count_space == 0:
-                arr_r_str.append( folder_name[i][:j] )
-                count_space += 1
-    arr_c_str = []
-    for i in range(len(variation_str)):
-        for j in range(len(variation_str[i])):
-            if variation_str[i][j] == " ":
-                arr_c_str.append( variation_str[i][j+1:] )
+    arr_r_str, arr_c_str = get_arr_rc_str(variation_str)
     fjson.write_keyvalue(file_path, "r_variation", arr_r_str)
     fjson.write_keyvalue(file_path, "c_variation", arr_c_str)
 
@@ -211,7 +345,8 @@ def process_analysis(folder_path_i):
     files, dfs, dfs_list = prepare_data(folder_path_i)
 
     variation_str, variation_data = preprocessing_rc_data(files)
-    
+
+
     iteration = len(dfs_list) // len(variation_data)
     arr_z_ref, arr_phase_ref, dfs_list = get_data_ref(variation_data, dfs_list, iteration)
     arr_z_mid, arr_phase_mid, dfs_list = get_data_mid(dfs_list, iteration)
@@ -232,9 +367,42 @@ def process_analysis(folder_path_i):
                     x_label="Frequency (Hz)", y_label="Phase (°)",
                     suptitle_prefix="Phase")
 
+    # every variation have n dataframes. n = num_of_iteration
+    # build single dataframe for every variation by averaging them
+    df_choosen = build_df_choosen(dfs_list, iteration)
 
-    update_variation_rc_json(variation_str, variation_data, arr_z_ref, arr_phase_ref, arr_z_mid, arr_phase_mid)
+    # plot & save figure
+    single_graph_from_df_choosen(df_choosen, variation_str, saved_dirname,
+                                x_data="Frequency", y_data="Impedance",
+                                x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
+                                suptitle_prefix="SG", suptitle_sufix=)
+
+    # store data_avg of parameter: z, phase. Stored to variatioin_rc_json
+    arr_z_avg, arr_phase_avg = get_z_phase_avg_from_df_choosen(df_choosen)
+
+    arr_r_value, arr_c_value, \
+        arr_r_theory_avg, arr_c_theory_avg, \
+        arr_r_theory_ref, arr_c_theory_ref = \
+        get_rc_value_theoryavg_theoryref(arr_z_avg, arr_phase_avg, arr_z_ref, arr_phase_ref, variation_data)
+
+    arr_z_err, arr_phase_err, \
+        arr_rtheoryref_err, arr_ctheoryref_err, \
+        arr_rtheoryavg_err, arr_ctheoryavg_err = \
+        get_arr_err_from_all_parameters(arr_z_ref, arr_z_avg, arr_phase_ref, arr_phase_avg, variation_data)
+
+    
+
+
     update_overview_json(files, iteration, variation_str)
+    update_variation_rc_json(variation_str, variation_data,
+                            arr_z_ref, arr_phase_ref,
+                            arr_z_mid, arr_phase_mid,
+                            arr_z_avg, arr_phase_avg,
+                            arr_z_err, arr_phase_err,
+                            arr_r_theory_ref, arr_c_theory_ref,
+                            arr_r_theory_avg, arr_c_theory_avg,
+                            arr_rtheoryref_err, arr_ctheoryref_err,
+                            arr_rtheoryavg_err, arr_ctheoryavg_err)
 
 
 if __name__ == "__main__":
