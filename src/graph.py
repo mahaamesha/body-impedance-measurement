@@ -77,13 +77,13 @@ def single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved
     length = len( folder_path_i )-1
     count = 0
     slash_position = []     # store position of "\\"
+    suptitle_sufix = ""
     for i in range( length, 0, -1):
-        if folder_path_i[i] == "\\" and count < 2:
+        if (folder_path_i[i] == "\\" or folder_path_i[i] == "/") and count < 2:
             slash_position.append(i)
             count += 1
-
             if count == 2:
-                suptitle_sufix = folder_path_i[slash_position[1]:slash_position[0]]
+                suptitle_sufix = folder_path_i[slash_position[1]+1:slash_position[0]]
 
     suptitle_text = suptitle_prefix + " - " + suptitle_sufix
 

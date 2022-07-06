@@ -372,10 +372,15 @@ def process_analysis(folder_path_i):
     df_choosen = build_df_choosen(dfs_list, iteration)
 
     # plot & save figure
-    single_graph_from_df_choosen(df_choosen, variation_str, saved_dirname,
+    single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
                                 x_data="Frequency", y_data="Impedance",
                                 x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
-                                suptitle_prefix="SG", suptitle_sufix=)
+                                suptitle_prefix="SG Impedance")
+
+    single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
+                                x_data="Frequency", y_data="Phase",
+                                x_label="Frequency (Hz)", y_label="Phase (°)",
+                                suptitle_prefix="SG Phase")
 
     # store data_avg of parameter: z, phase. Stored to variatioin_rc_json
     arr_z_avg, arr_phase_avg = get_z_phase_avg_from_df_choosen(df_choosen)
