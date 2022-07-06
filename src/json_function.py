@@ -77,7 +77,7 @@ def initialize_tmp_files():
             "c": None,  # from measurement
 
             "z_ref": None,  # from calculate_z(r, xc) using r,c measurement
-            "z_mid": [],    # from data retrieval. for every variation C
+            "z_mid": [],    # from data retrieval. for every iteration
             "z_avg": None,  # from data retrieval
             "z_err": None,  # reference: "z_ref", data: "z_avg"
 
