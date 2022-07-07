@@ -1,5 +1,9 @@
 import matplotlib.pyplot as plt
 import os
+import pandas as pd
+from json_function import read_filejson
+from olah_repetisi_rc import get_arr_rc_str
+
 
 def graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname="",
                         x_data="Frequency", y_data="Impedance",
@@ -100,3 +104,69 @@ def single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved
         fig.savefig(save_path)
 
     print("Saving %s ... Done" %suptitle_text)
+
+
+def graph_to_overview_error_value(variation_str, saved_dirname, y_data="z_err", title="Impedance Error"):
+    data = read_filejson(file_path="tmp/variation_rc.json")
+    vals = list(data.values())
+
+    # for index in bar chart
+    arr_r_str, arr_c_str = get_arr_rc_str(variation_str)
+    arr_c_str.insert(0, "without C")
+    # print(arr_r_str)
+    # print(arr_c_str)
+
+    # build data for plot bar chart
+    # num_of_variation_c bar per index x
+    # if num_of_variation_c = 7 and num_of_variaton_r = 3
+    # obj_plot = {
+    #     "c1": ["r1", "r2", "r3"],
+    #     "c2": ["r1", "r2", "r3"]
+    # }
+
+    # prepare error data as arrays
+    # arr_err = [i for i in range(len(data))]       # only for checking
+    arr_err = []
+    for val in vals:
+        # check data_key in val. val is object that store all parameters
+        for data_key in val.keys():
+            # check if data_key contain "err". i want to get error value only
+            # because err value from data_theoryref is almost 0, i only concern in data_theoryavg
+            if ("err" in data_key) and ("ref" not in data_key):
+                # because data_theoryavg is long enough, check wheter y_data in data_key
+                if y_data in data_key:
+                    arr_err.append( val[data_key] )
+
+
+    # build obj_plot. it used in dataframe. graph require dataframe
+    obj_plot = {}
+    for c in range(len(arr_c_str)):
+        key = arr_c_str[c]
+        obj_plot[key] = []
+        for r in range(len(arr_r_str)):
+            idx = r * len(arr_c_str) + c
+            err_value = arr_err[idx]
+            obj_plot[key].append( err_value )
+
+        # print(obj_plot)
+            
+
+    # plot obj_plot to bar chart
+    df_plot = pd.DataFrame(obj_plot, index=arr_r_str)
+
+    df_plot.plot(kind="bar")
+    plt.title("BC %s" %title)
+    plt.ylabel(title + " (%)")    
+    plt.grid(True)
+    plt.tight_layout()
+    
+    # save figure
+    try:    # for notebook environment
+        save_path = os.path.join("../media/", saved_dirname, "BC %s.jpg" %title)
+        plt.savefig(save_path)
+        plt.show()
+    except: # for local python environment
+        save_path = os.path.join("media/", saved_dirname, "BC %s.jpg" %title)
+        plt.savefig(save_path)
+
+    print("Saving %s ... Done" %("BC %s.jpg" %title))

@@ -371,13 +371,7 @@ def build_df_from_variation_rc_json(header, data_key):
     return df
 
 
-def process_analysis(folder_path_i):
-    files, dfs, dfs_list = prepare_data(folder_path_i)
-
-    variation_str, variation_data = preprocessing_rc_data(files)
-
-
-    iteration = len(dfs_list) // len(variation_data)
+def process_analysis(folder_path_i, variation_data, dfs_list, iteration):
     arr_z_ref, arr_phase_ref, dfs_list = get_data_ref(variation_data, dfs_list, iteration)
 
 
@@ -470,16 +464,33 @@ if __name__ == "__main__":
     # process analysis
     for idx in range(len(folder_path)):
         print("Processing %s ..." %folder_name[idx])
-        process_analysis(folder_path[idx])
+
+        # preprocessing
+        files, dfs, dfs_list = prepare_data(folder_path[idx])
+        variation_str, variation_data = preprocessing_rc_data(files)
+        saved_dirname = prepare_result_folder(data_path)
+
+        iteration = len(dfs_list) // len(variation_data)
+
+        # main processing
+        process_analysis(folder_path[idx], variation_data, dfs_list, iteration)
+        # process_analysis(folder_path[idx])
+
         print()
+
 
     # create dataframe from final variation_rc.json
     df_z_phase, df_r_c = prepare_df_from_variation_rc_json()
     # save them as image
-    saved_dirname = prepare_result_folder(data_path)
     save_df_as_image(df_z_phase, filename="TB Impedance Phase", saved_dirname=saved_dirname)
     save_df_as_image(df_r_c, filename="TB RC Value", saved_dirname=saved_dirname)
     # tabulate dataframe in markdown file
     create_markdown_table_from_dataframe(df_z_phase, filename="TB Impedance Phase", saved_dirname=saved_dirname)
     create_markdown_table_from_dataframe(df_r_c, filename="TB RC Value", saved_dirname=saved_dirname)
+
+    # make bar chart to compare error    
+    graph_to_overview_error_value(variation_str, saved_dirname, y_data="z_err", title="Impedance Error")
+    graph_to_overview_error_value(variation_str, saved_dirname, y_data="phase_err", title="Phase Error")
+    graph_to_overview_error_value(variation_str, saved_dirname, y_data="r_err", title="R Value Error")
+    graph_to_overview_error_value(variation_str, saved_dirname, y_data="c_err", title="C Value Error")
     
