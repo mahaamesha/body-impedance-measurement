@@ -4,6 +4,7 @@ import pandas as pd
 from formula import *
 import json_function as fjson
 from graph import *
+from post_process import *
 
 
 data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/repetisi RC"
@@ -129,7 +130,7 @@ def get_data_mid(dfs_list, iteration):
     return arr_z_mid, arr_phase_mid, dfs_list
 
 
-def prepare_result_figure_folder(data_path):
+def prepare_result_folder(data_path):
     # prepare folder to save the figure
     saved_dirname = ""
     for i in range(len(data_path)-1, 0, -1):
@@ -341,6 +342,35 @@ def update_overview_json(files, iteration, variation_str):
     print("Writing", file_path, "... Done")
 
 
+def build_df_from_variation_rc_json(header, data_key):
+    data = fjson.read_filejson(file_path="tmp/variation_rc.json")
+
+    keys = list( data.keys() )
+    values = list( data.values() )
+
+    df = pd.DataFrame(columns=header)
+
+    for i in range(len(data)):      # loop as many as num_of_total_variations
+        obj_row = {}    # append this as new row
+        for j in range(len(header)):     # loop as many as num_of_columns
+            if len(obj_row) == 0:
+                obj_row[header[j]] = keys[i]        # for column: "variation"
+            else:
+                num = values[i][data_key[j]]
+                if abs(num) == 0: num = 0
+                elif float(num).is_integer(): num = int(num)
+                elif abs(num) >= 1e-3: num = "{:.3f}".format(num)
+                elif abs(num) < 1e-3: num = "{:.2e}".format(num)
+                obj_row[header[j]] = num
+
+        # add new row to dataframe
+        df.loc[len(df)] = list( obj_row.values() )
+        # print(obj_row, end="\n\n")
+        # print(list(obj_row.keys()), end="\n\n")
+    
+    return df
+
+
 def process_analysis(folder_path_i):
     files, dfs, dfs_list = prepare_data(folder_path_i)
 
@@ -351,7 +381,7 @@ def process_analysis(folder_path_i):
     arr_z_ref, arr_phase_ref, dfs_list = get_data_ref(variation_data, dfs_list, iteration)
 
 
-    saved_dirname = prepare_result_figure_folder(data_path)
+    saved_dirname = prepare_result_folder(data_path)
     
     # plot & save figure
     graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
@@ -414,6 +444,20 @@ def process_analysis(folder_path_i):
                             arr_rtheoryavg_err, arr_ctheoryavg_err)
 
 
+def prepare_df_from_variation_rc_json():
+    header = ["variation", "z_ref", "z_avg", "%z", "\u03C6_ref", "\u03C6_avg", "%\u03C6"]
+    data_key = ["variation", "z_ref", "z_avg", "z_err", "phase_ref", "phase_avg", "phase_err"]
+    df_z_phase = build_df_from_variation_rc_json(header, data_key)
+
+    header = ["variation", "r_ref", "%r_ref", "r_avg", "%r_avg",
+                            "c_ref", "%c_ref", "c_avg", "%c_avg"]
+    data_key = ["variation", "r_ref", "r_err_theoryref_measurement", "r_avg", "r_err_theoryavg_measurement",
+                            "c_ref", "c_err_theoryref_measurement", "c_avg", "c_err_theoryavg_measurement",]
+    df_r_c = build_df_from_variation_rc_json(header, data_key)
+
+    return df_z_phase, df_r_c
+
+
 if __name__ == "__main__":
     i = 0
     for f in folder_path:
@@ -428,3 +472,14 @@ if __name__ == "__main__":
         print("Processing %s ..." %folder_name[idx])
         process_analysis(folder_path[idx])
         print()
+
+    # create dataframe from final variation_rc.json
+    df_z_phase, df_r_c = prepare_df_from_variation_rc_json()
+    # save them as image
+    saved_dirname = prepare_result_folder(data_path)
+    save_df_as_image(df_z_phase, filename="TB Impedance Phase", saved_dirname=saved_dirname)
+    save_df_as_image(df_r_c, filename="TB RC Value", saved_dirname=saved_dirname)
+    # tabulate dataframe in markdown file
+    create_markdown_table_from_dataframe(df_z_phase, filename="TB Impedance Phase", saved_dirname=saved_dirname)
+    create_markdown_table_from_dataframe(df_r_c, filename="TB RC Value", saved_dirname=saved_dirname)
+    

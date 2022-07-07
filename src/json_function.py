@@ -89,7 +89,7 @@ def initialize_tmp_files():
             "r_ref": None,                          # from "z_ref" and "phase_ref"
             "r_avg": None,                          # from "z_avg" and "phase_avg"
             "r_err_theoryref_measurement": None,    # reference: "r", data: "r_ref"
-            "r_err_theroyavg_measurement": None,    # reference: "r", data: "r_avg"
+            "r_err_theoryavg_measurement": None,    # reference: "r", data: "r_avg"
 
             "c_ref": None,
             "c_avg": None,

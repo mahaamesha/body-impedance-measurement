@@ -47,7 +47,7 @@ def graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved
         save_path = os.path.join("media/", saved_dirname, suptitle_text + ".jpg")
         fig.savefig(save_path)
 
-    print("Saving %s ... Done" %save_path)
+    print("Saving %s ... Done" %suptitle_text)
 
 
 
@@ -99,4 +99,4 @@ def single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved
         save_path = os.path.join("media/", saved_dirname, suptitle_text + ".jpg")
         fig.savefig(save_path)
 
-    print("Saving %s ... Done" %save_path)
+    print("Saving %s ... Done" %suptitle_text)
