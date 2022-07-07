@@ -349,7 +349,7 @@ def process_analysis(folder_path_i):
 
     iteration = len(dfs_list) // len(variation_data)
     arr_z_ref, arr_phase_ref, dfs_list = get_data_ref(variation_data, dfs_list, iteration)
-    arr_z_mid, arr_phase_mid, dfs_list = get_data_mid(dfs_list, iteration)
+
 
     saved_dirname = prepare_result_figure_folder(data_path)
     
@@ -367,6 +367,9 @@ def process_analysis(folder_path_i):
                     x_label="Frequency (Hz)", y_label="Phase (°)",
                     suptitle_prefix="Phase")
 
+    
+    arr_z_mid, arr_phase_mid, dfs_list = get_data_mid(dfs_list, iteration)
+    
     # every variation have n dataframes. n = num_of_iteration
     # build single dataframe for every variation by averaging them
     df_choosen = build_df_choosen(dfs_list, iteration)
@@ -381,6 +384,7 @@ def process_analysis(folder_path_i):
                                 x_data="Frequency", y_data="Phase",
                                 x_label="Frequency (Hz)", y_label="Phase (°)",
                                 suptitle_prefix="SG Phase")
+
 
     # store data_avg of parameter: z, phase. Stored to variatioin_rc_json
     arr_z_avg, arr_phase_avg = get_z_phase_avg_from_df_choosen(df_choosen)
