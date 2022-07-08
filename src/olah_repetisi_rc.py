@@ -488,9 +488,7 @@ if __name__ == "__main__":
     create_markdown_table_from_dataframe(df_z_phase, filename="TB Impedance Phase", saved_dirname=saved_dirname)
     create_markdown_table_from_dataframe(df_r_c, filename="TB RC Value", saved_dirname=saved_dirname)
 
-    # make bar chart to compare error    
-    graph_to_overview_error_value(variation_str, saved_dirname, y_data="z_err", title="Impedance Error")
-    graph_to_overview_error_value(variation_str, saved_dirname, y_data="phase_err", title="Phase Error")
-    graph_to_overview_error_value(variation_str, saved_dirname, y_data="r_err", title="R Value Error")
-    graph_to_overview_error_value(variation_str, saved_dirname, y_data="c_err", title="C Value Error")
-    
+    # make bar chart to compare error
+    y_data = ["z_err", "phase_err", "r_err", "c_err"]
+    title = ["Impedance Error", "Phase Error", "R Value Error", "C Value Error"]
+    graph_to_overview_error_value_batch(variation_str, saved_dirname, y_data, title)
