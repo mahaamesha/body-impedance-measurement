@@ -6,7 +6,7 @@ import serial
 arduino_port = "COM4"   # for windows
 baud = 9600 #arduino uno runs at 9600 baud
 path = "D:/My_Project/body-impedance-measurement/esp/data_retrieved"
-file_name = "analog-data.csv" #name of the CSV file generated
+file_name = "analog-data.csv"       # default name to generate
 file_path = os.path.join(path, file_name)
 
 # used as mark if the system want to start next sweeping
@@ -17,7 +17,7 @@ header = ["Frequency", "Real", "Imaginer", "Impedance"]
 
 
 ser = serial.Serial(arduino_port, baud)
-print("Connected to Arduino port:" + arduino_port)
+print("Connecting to port: " + arduino_port)
 
 #add the data to the file
 flag = False    # is start to write data?
@@ -30,18 +30,26 @@ while True:
     if data == complete_text:
         key = 0
         while (key != "y") and (key != "n"):
-            key = input("Retrieve data? (y/n)")
+            key = input("\nRetrieve data? (y/n) ")
             
             # if yes, clear the file first
             if key == "y":
                 flag = True
+            
+                # set filename
+                file_name = input("Input filename (without file format): ")
+                file_path = os.path.join(path, file_name + ".csv")
+
+                # create the file
                 with open(file_path, "w") as f:
                     f.write("")
-                print("Retrieving data ...")
+
+                print("Retrieving data ...\n")
                     
             elif key == "n": sys.exit("Exiting ... Done")
 
     if flag:
+        # write data
         with open(file_path, "a") as f:
             # create header first
             if data == complete_text:
