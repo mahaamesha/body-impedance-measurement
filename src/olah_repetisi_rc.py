@@ -187,18 +187,18 @@ def get_z_phase_avg_from_df_choosen(df_choosen):
     return arr_z_avg, arr_phase_avg
 
 
-def get_rc_theory(arr_z_avg, arr_phase_avg, fmid):
-    arr_r_theory = []
-    arr_c_theory = []
+def get_rc_value(arr_z, arr_phase, fmid):
+    arr_r = []
+    arr_c = []
 
-    for i in range(len(arr_z_avg)):
-        r_theory = calculate_r(arr_z_avg[i], arr_phase_avg[i])
-        c_theory = calculate_c(arr_z_avg[i], arr_phase_avg[i], fmid)
+    for i in range(len(arr_z)):
+        r = calculate_r(arr_z[i], arr_phase[i])
+        c = calculate_c(arr_z[i], arr_phase[i], fmid)
 
-        arr_r_theory.append(r_theory)
-        arr_c_theory.append(c_theory)
+        arr_r.append(r)
+        arr_c.append(c)
 
-    return arr_r_theory, arr_c_theory
+    return arr_r, arr_c
 
 
 def get_arr_err(arr_ref, arr_data):
@@ -249,9 +249,9 @@ def get_rc_value_theoryavg_theoryref(arr_z_avg, arr_phase_avg, arr_z_ref, arr_ph
     # value of r and c from measurement
     arr_r_value, arr_c_value = get_arr_rc_value(variation_data)
     # array of r theory calculated from data: z_avg, phase_avg
-    arr_r_theory_avg, arr_c_theory_avg = get_rc_theory(arr_z_avg, arr_phase_avg, fmid=calculate_fmid(fstart, fend))
+    arr_r_theory_avg, arr_c_theory_avg = get_rc_value(arr_z_avg, arr_phase_avg, fmid=calculate_fmid(fstart, fend))
     # array of r theory calculated from data: z_ref, phase_ref
-    arr_r_theory_ref, arr_c_theory_ref = get_rc_theory(arr_z_ref, arr_phase_ref, fmid=calculate_fmid(fstart, fend))
+    arr_r_theory_ref, arr_c_theory_ref = get_rc_value(arr_z_ref, arr_phase_ref, fmid=calculate_fmid(fstart, fend))
 
     return arr_r_value, arr_c_value,\
             arr_r_theory_avg, arr_c_theory_avg,\
