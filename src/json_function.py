@@ -98,6 +98,20 @@ def initialize_tmp_files():
         }
     }
 
+
+    retrieval_obj = \
+    {
+        "key_name": {
+            "z_mid": [],    # from data retrieval. for every iteration
+            "z_avg": None,  # from data retrieval
+            "phase_mid": [],
+            "phase_avg": None,
+            "r_avg": None,  # from "z_avg" and "phase_avg"
+            "c_avg": None
+        }
+    }
+
+
     overview_obj = \
     {
         "folder_path": [None],
@@ -110,6 +124,7 @@ def initialize_tmp_files():
 
     # initialization json files
     write_obj_to_filejson(file_path="tmp/variation_rc.json", obj=variation_rc_obj)
+    write_obj_to_filejson(file_path="tmp/retrieval.json", obj=retrieval_obj)
     write_obj_to_filejson(file_path="tmp/overview.json", obj=overview_obj)
 
     print("Initialize tmp files ... Done")
