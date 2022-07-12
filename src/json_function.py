@@ -70,6 +70,16 @@ def write_keyvalue(file_path="tmp/file.json", key="keyname", value=None):
 # SPECIFIC FUNCTION
 def initialize_tmp_files():
     # define obj for formatting purposes
+    rc_overview_obj = \
+    {
+        "folder_path": [None],
+        "sweep_frequency": [None],
+        "r_variation": [None],
+        "c_variation": [None],
+        "num_variation": None,
+        "num_iteration": None
+    }
+
     rc_variation_obj = \
     {
         "Rohm CpF": {
@@ -98,6 +108,15 @@ def initialize_tmp_files():
         }
     }
 
+    # define obj for formatting purposes
+    retrieval_overview_obj = \
+    {
+        "folder_path": [None],
+        "sweep_frequency": [None],
+        "variation_str": [None],
+        "num_variation": None,
+        "num_iteration": None
+    }
 
     retrieval_variation_obj = \
     {
@@ -111,21 +130,11 @@ def initialize_tmp_files():
         }
     }
 
-
-    rc_overview_obj = \
-    {
-        "folder_path": [None],
-        "sweep_frequency": [None],
-        "r_variation": [None],
-        "c_variation": [None],
-        "num_variation": None,
-        "num_iteration": None
-    }
-
     # initialization json files
-    write_obj_to_filejson(file_path="tmp/rc_variation.json", obj=rc_variation_obj)
-    write_obj_to_filejson(file_path="tmp/retrieval_variation.json", obj=retrieval_variation_obj)
     write_obj_to_filejson(file_path="tmp/rc_overview.json", obj=rc_overview_obj)
+    write_obj_to_filejson(file_path="tmp/rc_variation.json", obj=rc_variation_obj)
+    write_obj_to_filejson(file_path="tmp/retrieval_overview.json", obj=retrieval_overview_obj)
+    write_obj_to_filejson(file_path="tmp/retrieval_variation.json", obj=retrieval_variation_obj)
 
     print("Initialize tmp files ... Done")
 
