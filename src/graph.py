@@ -107,7 +107,7 @@ def single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved
 
 
 def graph_to_overview_error_value(variation_str, saved_dirname, y_data="z_err", title="Impedance Error"):
-    data = read_filejson(file_path="tmp/variation_rc.json")
+    data = read_filejson(file_path="tmp/rc_variation.json")
     vals = list(data.values())
 
     # for index in bar chart
@@ -175,7 +175,7 @@ def graph_to_overview_error_value(variation_str, saved_dirname, y_data="z_err", 
 def graph_to_overview_error_value_batch(variation_str, saved_dirname, 
                                         y_data=["z_err", "phase_err", "r_err", "c_err"], 
                                         title=["Impedance Error", "Phase Error", "R Value Error", "C Value Error"]):
-    data = read_filejson(file_path="tmp/variation_rc.json")
+    data = read_filejson(file_path="tmp/rc_variation.json")
     vals = list(data.values())
 
     # for index in bar chart
