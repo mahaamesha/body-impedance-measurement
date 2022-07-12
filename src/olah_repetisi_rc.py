@@ -279,7 +279,7 @@ def get_arr_err_from_all_parameters(arr_z_ref, arr_z_avg, arr_phase_ref, arr_pha
             arr_rtheoryavg_err, arr_ctheoryavg_err
 
 
-def update_variation_rc_json(variation_str, variation_data,
+def update_rc_variation_json(variation_str, variation_data,
                             arr_z_ref, arr_phase_ref,
                             arr_z_mid, arr_phase_mid,
                             arr_z_avg, arr_phase_avg,
@@ -328,7 +328,7 @@ def update_variation_rc_json(variation_str, variation_data,
     print("Writing", file_path, "... Done")
 
 
-def update_overview_json(files, iteration, variation_str):
+def update_rc_overview_json(files, iteration, variation_str):
     # save important information to json file
     file_path = "tmp/rc_overview.json"
 
@@ -344,7 +344,7 @@ def update_overview_json(files, iteration, variation_str):
     print("Writing", file_path, "... Done")
 
 
-def build_df_from_variation_rc_json(header, data_key):
+def build_df_from_rc_variation_json(header, data_key):
     data = fjson.read_filejson(file_path="tmp/rc_variation.json")
 
     keys = list( data.keys() )
@@ -428,8 +428,8 @@ def process_analysis(folder_path_i, variation_data, dfs_list, iteration):
     
 
 
-    update_overview_json(files, iteration, variation_str)
-    update_variation_rc_json(variation_str, variation_data,
+    update_rc_overview_json(files, iteration, variation_str)
+    update_rc_variation_json(variation_str, variation_data,
                             arr_z_ref, arr_phase_ref,
                             arr_z_mid, arr_phase_mid,
                             arr_z_avg, arr_phase_avg,
@@ -440,16 +440,16 @@ def process_analysis(folder_path_i, variation_data, dfs_list, iteration):
                             arr_rtheoryavg_err, arr_ctheoryavg_err)
 
 
-def prepare_df_from_variation_rc_json():
+def prepare_df_from_rc_variation_json():
     header = ["variation", "z_ref", "z_avg", "%z", "\u03C6_ref", "\u03C6_avg", "%\u03C6"]
     data_key = ["variation", "z_ref", "z_avg", "z_err", "phase_ref", "phase_avg", "phase_err"]
-    df_z_phase = build_df_from_variation_rc_json(header, data_key)
+    df_z_phase = build_df_from_rc_variation_json(header, data_key)
 
     header = ["variation", "r_ref", "%r_ref", "r_avg", "%r_avg",
                             "c_ref", "%c_ref", "c_avg", "%c_avg"]
     data_key = ["variation", "r_ref", "r_err_theoryref_measurement", "r_avg", "r_err_theoryavg_measurement",
                             "c_ref", "c_err_theoryref_measurement", "c_avg", "c_err_theoryavg_measurement",]
-    df_r_c = build_df_from_variation_rc_json(header, data_key)
+    df_r_c = build_df_from_rc_variation_json(header, data_key)
 
     return df_z_phase, df_r_c
 
@@ -481,8 +481,8 @@ if __name__ == "__main__":
         print()
 
 
-    # create dataframe from final variation_rc.json
-    df_z_phase, df_r_c = prepare_df_from_variation_rc_json()
+    # create dataframe from final rc_variation.json
+    df_z_phase, df_r_c = prepare_df_from_rc_variation_json()
     # save them as image
     save_df_as_image(df_z_phase, filename="TB Impedance Phase", saved_dirname=saved_dirname)
     save_df_as_image(df_r_c, filename="TB RC Value", saved_dirname=saved_dirname)
