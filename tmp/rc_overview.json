@@ -1,0 +1,26 @@
+{
+    "folder_path": [
+        "465ohm variasi C/",
+        "1003ohm variasi C/",
+        "1468ohm variasi C/"
+    ],
+    "sweep_frequency": [
+        20000.0,
+        50000.0
+    ],
+    "r_variation": [
+        "465ohm",
+        "1003ohm",
+        "1468ohm"
+    ],
+    "c_variation": [
+        "10.57nF",
+        "150pF",
+        "180pF",
+        "3.83nF",
+        "5.53nF",
+        "90pF"
+    ],
+    "num_variation": 7,
+    "num_iteration": 5
+}

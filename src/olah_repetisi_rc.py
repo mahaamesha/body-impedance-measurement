@@ -289,31 +289,33 @@ def update_variation_rc_json(variation_str, variation_data,
                             arr_rtheoryref_err, arr_ctheoryref_err,
                             arr_rtheoryavg_err, arr_ctheoryavg_err):
     # save important information to json file
-    file_path="tmp/variation_rc.json"
-    variation_rc_obj = {}
-    for i in range(len(variation_data)):
-        variation_rc_obj[variation_str[i]] = {}
-        
-        variation_rc_obj[variation_str[i]]["r"] = variation_data[i][0]
-        variation_rc_obj[variation_str[i]]["c"] = variation_data[i][1]
-        variation_rc_obj[variation_str[i]]["z_ref"] = arr_z_ref[i]
-        variation_rc_obj[variation_str[i]]["z_mid"] = arr_z_mid[i]
-        variation_rc_obj[variation_str[i]]["z_avg"] = arr_z_avg[i]
-        variation_rc_obj[variation_str[i]]["z_err"] = arr_z_err[i]
-        variation_rc_obj[variation_str[i]]["phase_ref"] = arr_phase_ref[i]
-        variation_rc_obj[variation_str[i]]["phase_mid"] = arr_phase_mid[i]
-        variation_rc_obj[variation_str[i]]["phase_avg"] = arr_phase_avg[i]
-        variation_rc_obj[variation_str[i]]["phase_err"] = arr_phase_err[i]
+    file_path="tmp/rc_variation.json"
+    obj = {}
 
-        variation_rc_obj[variation_str[i]]["r_ref"] = arr_r_theory_ref[i]
-        variation_rc_obj[variation_str[i]]["r_avg"] = arr_r_theory_avg[i]
-        variation_rc_obj[variation_str[i]]["r_err_theoryref_measurement"] = arr_rtheoryref_err[i]
-        variation_rc_obj[variation_str[i]]["r_err_theoryavg_measurement"] = arr_rtheoryavg_err[i]
+    # update value of each key
+    for i in range(len(variation_data)):
+        obj[variation_str[i]] = {}
         
-        variation_rc_obj[variation_str[i]]["c_ref"] = arr_c_theory_ref[i]
-        variation_rc_obj[variation_str[i]]["c_avg"] = arr_c_theory_avg[i]
-        variation_rc_obj[variation_str[i]]["c_err_theoryref_measurement"] = arr_ctheoryref_err[i]
-        variation_rc_obj[variation_str[i]]["c_err_theoryavg_measurement"] = arr_ctheoryavg_err[i]
+        obj[variation_str[i]]["r"] = variation_data[i][0]
+        obj[variation_str[i]]["c"] = variation_data[i][1]
+        obj[variation_str[i]]["z_ref"] = arr_z_ref[i]
+        obj[variation_str[i]]["z_mid"] = arr_z_mid[i]
+        obj[variation_str[i]]["z_avg"] = arr_z_avg[i]
+        obj[variation_str[i]]["z_err"] = arr_z_err[i]
+        obj[variation_str[i]]["phase_ref"] = arr_phase_ref[i]
+        obj[variation_str[i]]["phase_mid"] = arr_phase_mid[i]
+        obj[variation_str[i]]["phase_avg"] = arr_phase_avg[i]
+        obj[variation_str[i]]["phase_err"] = arr_phase_err[i]
+
+        obj[variation_str[i]]["r_ref"] = arr_r_theory_ref[i]
+        obj[variation_str[i]]["r_avg"] = arr_r_theory_avg[i]
+        obj[variation_str[i]]["r_err_theoryref_measurement"] = arr_rtheoryref_err[i]
+        obj[variation_str[i]]["r_err_theoryavg_measurement"] = arr_rtheoryavg_err[i]
+        
+        obj[variation_str[i]]["c_ref"] = arr_c_theory_ref[i]
+        obj[variation_str[i]]["c_avg"] = arr_c_theory_avg[i]
+        obj[variation_str[i]]["c_err_theoryref_measurement"] = arr_ctheoryref_err[i]
+        obj[variation_str[i]]["c_err_theoryavg_measurement"] = arr_ctheoryavg_err[i]
 
 
     # clear formatting in file json
@@ -321,14 +323,14 @@ def update_variation_rc_json(variation_str, variation_data,
     if len(data) <= 1:
         fjson.write_obj_to_filejson(file_path, obj={})
 
-    fjson.append_obj_to_filejson(file_path, obj=variation_rc_obj)
+    fjson.append_obj_to_filejson(file_path, obj=obj)
 
     print("Writing", file_path, "... Done")
 
 
 def update_overview_json(files, iteration, variation_str):
     # save important information to json file
-    file_path = "tmp/overview.json"
+    file_path = "tmp/rc_overview.json"
 
     fjson.write_keyvalue(file_path, "sweep_frequency", [fstart, fend])
     fjson.write_keyvalue(file_path, "num_variation", len(files)//iteration)
@@ -343,7 +345,7 @@ def update_overview_json(files, iteration, variation_str):
 
 
 def build_df_from_variation_rc_json(header, data_key):
-    data = fjson.read_filejson(file_path="tmp/variation_rc.json")
+    data = fjson.read_filejson(file_path="tmp/rc_variation.json")
 
     keys = list( data.keys() )
     values = list( data.values() )
