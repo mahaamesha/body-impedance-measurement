@@ -1,13 +1,19 @@
 {
     "folder_path": [
-        null
+        "data variasi grip/"
     ],
     "sweep_frequency": [
-        null
+        20000.0,
+        50000.0
     ],
     "variation_str": [
-        null
+        "1003ohm",
+        "g1",
+        "g2",
+        "g3",
+        "g4",
+        "t1"
     ],
-    "num_variation": null,
-    "num_iteration": null
+    "num_variation": 6,
+    "num_iteration": 5
 }
