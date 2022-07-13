@@ -461,7 +461,7 @@ if __name__ == "__main__":
         i += 1
 
     # prepare tmp files
-    fjson.initialize_tmp_files()
+    fjson.initialize_rc_tmp_files()
 
     # process analysis
     for idx in range(len(folder_path)):

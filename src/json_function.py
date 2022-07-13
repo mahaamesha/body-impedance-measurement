@@ -68,7 +68,7 @@ def write_keyvalue(file_path="tmp/file.json", key="keyname", value=None):
 
 
 # SPECIFIC FUNCTION
-def initialize_tmp_files():
+def initialize_rc_tmp_files():
     # define obj for formatting purposes
     rc_overview_obj = \
     {
@@ -108,6 +108,14 @@ def initialize_tmp_files():
         }
     }
 
+    # initialization json files
+    write_obj_to_filejson(file_path="tmp/rc_overview.json", obj=rc_overview_obj)
+    write_obj_to_filejson(file_path="tmp/rc_variation.json", obj=rc_variation_obj)
+
+    print("Initialize tmp files ... Done")
+
+
+def initialize_retrieval_tmp_files():
     # define obj for formatting purposes
     retrieval_overview_obj = \
     {
@@ -131,8 +139,6 @@ def initialize_tmp_files():
     }
 
     # initialization json files
-    write_obj_to_filejson(file_path="tmp/rc_overview.json", obj=rc_overview_obj)
-    write_obj_to_filejson(file_path="tmp/rc_variation.json", obj=rc_variation_obj)
     write_obj_to_filejson(file_path="tmp/retrieval_overview.json", obj=retrieval_overview_obj)
     write_obj_to_filejson(file_path="tmp/retrieval_variation.json", obj=retrieval_variation_obj)
 
@@ -142,6 +148,7 @@ def initialize_tmp_files():
 
 
 if __name__ == "__main__":
-    initialize_tmp_files()
+    initialize_rc_tmp_files()
+    initialize_retrieval_tmp_files()
 
     print("Run json_function.py ... Done")
