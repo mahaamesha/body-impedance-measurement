@@ -3,6 +3,8 @@ import pandas as pd
 
 from formula import *
 import json_function as fjson
+from graph import *
+from post_process import *
 
 
 data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/hand to hand"
@@ -11,6 +13,44 @@ folder_path = folder_name.copy()
 
 fstart = 20e3
 fend = 50e3
+
+
+def prepare_data(folder_path_i):
+    # scan all files
+    path, dirs, files = next(os.walk(folder_path_i))
+
+    # append datasets to the list
+    dfs = {}
+    for fn in files:
+        path = folder_path_i + fn
+        temp_df = pd.read_csv(path)
+        dfs[fn[:-4]] = temp_df
+
+    dfs_list = list(dfs.values())
+
+    # delete column contains NaN
+    for df in dfs_list:
+        # get column name
+        column_list = []
+        for col in df.columns:
+            column_list.append(col)
+        
+        # delete column after "Magnitude"
+        # "Magnitude" in index 5
+        for i in range(len(column_list)):
+            if i > 5: del df[column_list[i]]
+    
+    return files, dfs, dfs_list
+
+
+def preprocessing_data_retrieval(files):
+    # extract the every variation
+    variation_str = []
+    for f in files:
+        if f[:-8] not in variation_str:
+            variation_str.append( f[:-8] )
+
+    return variation_str
 
 
 def find_fmid_from_data_retrieval(dfs_list):
@@ -187,3 +227,89 @@ def build_df_from_rc_variation_json(header, data_key):
         # print(list(obj_row.keys()), end="\n\n")
     
     return df
+
+
+def process_analysis(folder_path_i, variation_str, dfs_list, iteration):
+    saved_dirname = prepare_result_folder(data_path)
+    
+    # plot & save figure
+    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
+                    x_data="Frequency", y_data="Impedance",
+                    x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
+                    suptitle_prefix="Impedance")
+    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
+                    x_data="Frequency", y_data="Phase",
+                    x_label="Frequency (Hz)", y_label="Phase (°)",
+                    suptitle_prefix="Phase")
+    
+    # get z_mid & phase_mid from every dataframe. data_mid is data at fmid
+    # arr = [[...], [...], ...]
+    arr_z_mid, arr_phase_mid, dfs_list = get_data_mid(dfs_list, iteration)
+    
+    # every variation have n dataframes. n = num_of_iteration
+    # build single dataframe for every variation by averaging them
+    df_choosen = build_df_choosen(dfs_list, iteration)
+
+    # plot & save figure
+    single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
+                                x_data="Frequency", y_data="Impedance",
+                                x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
+                                suptitle_prefix="SG Impedance")
+
+    single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
+                                x_data="Frequency", y_data="Phase",
+                                x_label="Frequency (Hz)", y_label="Phase (°)",
+                                suptitle_prefix="SG Phase")
+
+    # store data_avg of parameter: z, phase. Stored to variatioin_rc_json
+    arr_z_avg, arr_phase_avg = get_z_phase_avg_from_df_choosen(df_choosen)
+
+    # calculate r,c from z,phase
+    fmid = find_fmid_from_data_retrieval(dfs_list)
+    arr_r, arr_c = get_rc_value(arr_z_avg, arr_phase_avg, fmid)  
+
+    # update json file data
+    update_retrieval_overview_json(files, iteration, variation_str)
+    update_retrieval_variation_json(variation_str,
+                                    arr_z_mid, arr_phase_mid,
+                                    arr_z_avg, arr_phase_avg,
+                                    arr_r, arr_c)
+
+
+if __name__ == "__main__":
+    i = 0
+    for f in folder_path:
+        folder_path[i] = os.path.join(data_path, f)
+        i += 1
+
+    # prepare tmp files
+    fjson.initialize_tmp_files()
+
+    # process analysis
+    for idx in range(len(folder_path)):
+        print("Processing %s ..." %folder_name[idx])
+
+        # preprocessing
+        files, dfs, dfs_list = prepare_data(folder_path[idx])
+        variation_str = preprocessing_data_retrieval(files)
+        saved_dirname = prepare_result_folder(data_path)
+
+        iteration = len(dfs_list) // len(variation_str)
+
+        # main processing
+        process_analysis(folder_path[idx], variation_str, dfs_list, iteration)
+        # process_analysis(folder_path[idx])
+
+        print()
+
+
+    # create dataframe from final retrieval_variation.json
+    header = ["Variation", "Z (Ohm)", "\u03C6 (°)", "R (Ohm)", "C (Farad)"]
+    data_key = ["variation", "z_avg", "phase_avg", "r_avg", "c_avg"]
+    df_params = build_df_from_rc_variation_json(header, data_key)
+
+    # save them as image
+    save_df_as_image(df_params, filename="TB Parameters", saved_dirname=saved_dirname)
+
+    # tabulate dataframe in markdown file
+    create_markdown_table_from_dataframe(df_params, filename="TB Parameters", saved_dirname=saved_dirname)
