@@ -344,8 +344,8 @@ def update_rc_overview_json(files, iteration, variation_str):
     print("Writing", file_path, "... Done")
 
 
-def build_df_from_file_json(header, data_key):
-    data = fjson.read_filejson(file_path="tmp/rc_variation.json")
+def build_df_from_file_json(header, data_key, file_path="tmp/rc_variation.json"):
+    data = fjson.read_filejson(file_path)
 
     keys = list( data.keys() )
     values = list( data.values() )
@@ -443,13 +443,13 @@ def process_analysis(folder_path_i, variation_data, dfs_list, iteration):
 def prepare_df_from_rc_variation_json():
     header = ["variation", "z_ref", "z_avg", "%z", "\u03C6_ref", "\u03C6_avg", "%\u03C6"]
     data_key = ["variation", "z_ref", "z_avg", "z_err", "phase_ref", "phase_avg", "phase_err"]
-    df_z_phase = build_df_from_file_json(header, data_key)
+    df_z_phase = build_df_from_file_json(header, data_key, file_path="tmp/rc_variation.json")
 
     header = ["variation", "r_ref", "%r_ref", "r_avg", "%r_avg",
                             "c_ref", "%c_ref", "c_avg", "%c_avg"]
     data_key = ["variation", "r_ref", "r_err_theoryref_measurement", "r_avg", "r_err_theoryavg_measurement",
                             "c_ref", "c_err_theoryref_measurement", "c_avg", "c_err_theoryavg_measurement",]
-    df_r_c = build_df_from_file_json(header, data_key)
+    df_r_c = build_df_from_file_json(header, data_key, file_path="tmp/rc_variation.json")
 
     return df_z_phase, df_r_c
 
