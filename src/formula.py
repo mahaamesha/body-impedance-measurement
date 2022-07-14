@@ -61,7 +61,7 @@ def calculate_c(z, phase, f):
     return c
 
 
-# related to body composition equation
+# function related to body composition equation
 # to calculate fat-free mass
 def calculate_ffm_eq1(w, h, z, y, s):
     # Predicting body composition using foot-to-foot bioelectrical impedance analysis in healthy Asian individuals
