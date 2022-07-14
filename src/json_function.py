@@ -146,9 +146,12 @@ def initialize_retrieval_tmp_files():
             "age": None,        # in years old
             "gender": None,     # male=1, female=0
             "impedance": None,  # in ohm
-            "ffm": [],          # in kg and %
-            "fm": [],
-            "tbw": []
+            "ffm": None,            # in kg
+            "ffm_percentage": None, # in %
+            "fm": None,
+            "fm_percentage": None,
+            "tbw": None,
+            "tbw_percentage": None
         }
     }
 
