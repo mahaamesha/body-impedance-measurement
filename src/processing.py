@@ -200,8 +200,8 @@ def update_retrieval_variation_json(variation_str,
     print("Writing", file_path, "... Done")
 
 
-def build_df_from_rc_variation_json(header, data_key):
-    data = fjson.read_filejson(file_path="tmp/retrieval_variation.json")
+def build_df_from_file_json(header, data_key, file_path="tmp/retrieval_variation.json"):
+    data = fjson.read_filejson(file_path)
 
     keys = list( data.keys() )
     values = list( data.values() )
@@ -276,6 +276,59 @@ def process_analysis(folder_path_i, variation_str, dfs_list, iteration):
                                     arr_r, arr_c)
 
 
+# ask input
+def input_user():
+    w = float( input("Input weight\t:") )
+    h = float( input("Input height\t:") )
+    h = float( input("Input age\t:") )
+    h = float( input("Input gender (1/0)\t:") )
+
+    return w, h, y, s
+
+
+# loop for every z value of every variation
+# read data z from retrieval_variation.json
+def update_retrieval_body_composition_json(w, h, y, s):
+    # read data z from json file
+    data = fjson.read_filejson(file_path="tmp/retrieval_variation.json")
+    keys = list ( data.keys() )     # access variation_name
+    values = list( data.values() )
+
+    # obj to store body composition data. see the format in json_function.json
+    obj = {}
+
+    for i in range(len(values)):
+        # z value of every variation
+        z = values[i]["z_avg"]
+
+        # calculate body composition
+        ffm_kg, fm_kg, tbw_kg = calculate_bc_kg(w, h, z, y, s)
+        ffm_percentage, fm_percentage, tbw_percentage = calculate_bc_percentage(w, ffm_kg, fm_kg, tbw_kg)
+
+        # create new key in obj
+        obj[keys[i]] = {}
+        # store data in obj. see the format in json_function.json
+        obj[keys[i]]["id"] = keys[i]
+        obj[keys[i]]["weight"] = w
+        obj[keys[i]]["height"] = h
+        obj[keys[i]]["age"] = y
+        obj[keys[i]]["gender"] = s
+        obj[keys[i]]["impedance"] = z
+        obj[keys[i]]["ffm"] = ffm_kg
+        obj[keys[i]]["ffm_percentage"] = ffm_percentage
+        obj[keys[i]]["fm"] = fm_kg
+        obj[keys[i]]["fm_percentage"] = fm_percentage
+        obj[keys[i]]["tbw"] = tbw_kg
+        obj[keys[i]]["tbw_percentage"] = tbw_percentage
+
+    # update retrieval_body_composition.json
+    file_path="tmp/retrieval_body_composition.json"
+    fjson.write_obj_to_filejson(file_path, obj)
+
+    print("Writing %s ... Done" %file_path)
+
+
+
 if __name__ == "__main__":
     i = 0
     for f in folder_path:
@@ -306,10 +359,22 @@ if __name__ == "__main__":
     # create dataframe from final retrieval_variation.json
     header = ["Variation", "Z (Ohm)", "\u03C6 (°)", "R (Ohm)", "C (Farad)"]
     data_key = ["variation", "z_avg", "phase_avg", "r_avg", "c_avg"]
-    df_params = build_df_from_rc_variation_json(header, data_key)
-
-    # save them as image
+    df_params = build_df_from_file_json(header, data_key, file_path="tmp/retrieval_variation.json")
+    # save it as image
     save_df_as_image(df_params, filename="TB Parameters", saved_dirname=saved_dirname)
-
     # tabulate dataframe in markdown file
     create_markdown_table_from_dataframe(df_params, filename="TB Parameters", saved_dirname=saved_dirname)
+
+
+    # update retrieval_body_composition.json
+    w, h, y, s = input_user()
+    update_retrieval_body_composition_json(w, h, y, s)
+
+    # create dataframe from final retrieval_body_composition.json
+    header = ["ID", "FFM (kg)", "FFM (%)", "FM (kg)", "FM (%)", "TBW (kg)", "TBW (%)"]
+    data_key = ["id", "ffm", "ffm_percentage", "fm", "fm_percentage", "tbw", "tbw_percentage"]
+    df_bc = build_df_from_file_json(header, data_key, file_path="tmp/retrieval_body_composition.json")
+    # save it as image
+    save_df_as_image(df_bc, filename="TB Body Composition", saved_dirname=saved_dirname)
+    # tabulate dataframe in markdown file
+    create_markdown_table_from_dataframe(df_bc, filename="TB Body Composition", saved_dirname=saved_dirname)
