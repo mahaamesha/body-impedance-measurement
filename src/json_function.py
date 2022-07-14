@@ -138,9 +138,24 @@ def initialize_retrieval_tmp_files():
         }
     }
 
+    retrieval_bc_obj = \
+    {
+        "variation_name": {
+            "weight": None,     # in kg
+            "height": None,     # in cm
+            "age": None,        # in years old
+            "gender": None,     # male=1, female=0
+            "impedance": None,  # in ohm
+            "ffm": [],          # in kg and %
+            "fm": [],
+            "tbw": []
+        }
+    }
+
     # initialization json files
     write_obj_to_filejson(file_path="tmp/retrieval_overview.json", obj=retrieval_overview_obj)
     write_obj_to_filejson(file_path="tmp/retrieval_variation.json", obj=retrieval_variation_obj)
+    write_obj_to_filejson(file_path="tmp/retrieval_body_composition.json", obj=retrieval_bc_obj)
 
     print("Initialize tmp files ... Done")
 
