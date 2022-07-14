@@ -1,0 +1,15 @@
+{
+    "variation_name": {
+        "weight": null,
+        "height": null,
+        "age": null,
+        "gender": null,
+        "impedance": null,
+        "ffm": null,
+        "ffm_percentage": null,
+        "fm": null,
+        "fm_percentage": null,
+        "tbw": null,
+        "tbw_percentage": null
+    }
+}
