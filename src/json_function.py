@@ -162,6 +162,21 @@ def initialize_retrieval_tmp_files():
 
     print("Initialize tmp files ... Done")
 
+
+def initialize_internal_factor(file_path="tmp/retrieval_internal_factor.json"):
+    # formatting purposes
+    internal_factor_obj = \
+    {
+        "delta_z": [],
+        "delta_phase": []
+    }
+
+    # initialization json files
+    write_obj_to_filejson(file_path, obj=internal_factor_obj)
+
+    print("Initialize %s ... Done" %file_path)
+
+
 # (END) SPECIFIC FUNCTION
 
 
