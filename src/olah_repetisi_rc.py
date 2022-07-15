@@ -455,6 +455,7 @@ def prepare_df_from_rc_variation_json():
 
 
 if __name__ == "__main__":
+    # replace path_value in folder_path
     i = 0
     for f in folder_path:
         folder_path[i] = os.path.join(data_path, f)
