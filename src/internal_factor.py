@@ -28,7 +28,6 @@ def init_internal_factor_json():
     return file_path
 
 
-
 # input Rcal and Phase for calibration
 def build_df_internal_factor(dfs_list, files):
     # ask input for actual value from measurement
