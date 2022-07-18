@@ -97,4 +97,6 @@ def get_internal_factor(data_path):
 
 
 if __name__ == "__main__":
-    get_internal_factor(data_path)
+    # get_internal_factor(data_path)
+    
+    print("Run internal_factor.py ... Done")
