@@ -7,7 +7,7 @@ from pandas.plotting import table
 
 
 def save_df_as_image(df, filename="TB Impedance Phase", saved_dirname=""):
-    df.index = ["  %s  " %i for i in range(len(df))] # Format date
+    df.index = ["  %s  " %i for i in range(len(df))] # Format index
 
     fig, ax = plt.subplots(figsize=(14,len(df)//2)) # set size frame
     ax.xaxis.set_visible(False)  # hide the x axis
