@@ -15,7 +15,7 @@ folder_path = folder_name.copy()
 fstart = 20e3
 fend = 50e3
 
-internal_flag = False
+internal_flag = True
 
 
 def prepare_data(folder_path_i):
