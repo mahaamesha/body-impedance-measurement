@@ -5,6 +5,7 @@ from formula import *
 import json_function as fjson
 from graph import *
 from post_process import *
+from internal_factor import get_internal_factor
 
 
 data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/repetisi RC"
@@ -13,6 +14,9 @@ folder_path = folder_name.copy()
 
 fstart = 20e3
 fend = 50e3
+
+internal_flag = False
+
 
 def prepare_data(folder_path_i):
     # scan all files
@@ -40,6 +44,27 @@ def prepare_data(folder_path_i):
             if i > 5: del df[column_list[i]]
     
     return files, dfs, dfs_list
+
+
+# revise z and phase value by internal factor
+def create_actual_params_columns(dfs_list):
+    # load data internal factor
+    file_path="tmp/rc_internal_factor.json"
+    data = fjson.read_filejson(file_path)
+
+    for df in dfs_list:         # loop in each dataframe
+        # create new column
+        df["Actual Z"] = 0
+        df["Actual Phase"] = 0
+
+        for row in range(len(df)):      # loop in each row
+            # assign actual value
+            df.loc[row, "Actual Z"] = df.loc[row, "Impedance"] - data["delta_z"][row]
+            df.loc[row, "Actual Phase"] = df.loc[row, "Phase"] - data["delta_phase"][row]
+            # print( df.loc[row, "Impedance"], data["delta_z"][row] )
+
+        # print(df)
+    return dfs_list
 
 
 def preprocessing_rc_data(files):
@@ -82,7 +107,7 @@ def preprocessing_rc_data(files):
     return variation_str, variation_data
 
 
-def get_data_ref(variation_data, dfs_list, iteration):
+def get_data_ref(variation_data):
     # theoritic as reference
     fmid = calculate_fmid(fstart, fend)
     arr_z_ref = []
@@ -97,13 +122,20 @@ def get_data_ref(variation_data, dfs_list, iteration):
         arr_z_ref.append(z)
         arr_phase_ref.append(phase)
 
+    return arr_z_ref, arr_phase_ref
+
+
+def create_error_z_column(arr_z_ref, dfs_list, iteration):
     # calculate error Z
     i = 0
     for df in dfs_list:
-        df["%Z"] = calculate_error(arr_z_ref[i//iteration], df["Impedance"])
+        if not(internal_flag):
+            df["%Z"] = calculate_error(arr_z_ref[i//iteration], df["Impedance"])
+        elif internal_flag:
+            df["%Zactual"] = calculate_error(arr_z_ref[i//iteration], df["Actual Z"])
         i += 1
 
-    return arr_z_ref, arr_phase_ref, dfs_list
+    return dfs_list
 
 
 def get_data_mid(dfs_list, iteration):
@@ -122,8 +154,12 @@ def get_data_mid(dfs_list, iteration):
             arr_z_mid.append([])
             arr_phase_mid.append([])
         
-        arr_z_mid[idx].append( df["Impedance"][nrows//2] )
-        arr_phase_mid[idx].append( df["Phase"][nrows//2] )
+        if not(internal_flag):
+            arr_z_mid[idx].append( df["Impedance"][nrows//2] )
+            arr_phase_mid[idx].append( df["Phase"][nrows//2] )
+        elif internal_flag:
+            arr_z_mid[idx].append( df["Actual Z"][nrows//2] )
+            arr_phase_mid[idx].append( df["Actual Phase"][nrows//2] )
 
         count += 1
 
@@ -154,6 +190,37 @@ def prepare_result_folder(data_path):
     return saved_dirname
 
 
+def build_graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname):
+    if not(internal_flag):
+        # plot & save figure
+        graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
+                        x_data="Frequency", y_data="%Z",
+                        x_label="Frequency (Hz)", y_label="Impedance Error (%)",
+                        suptitle_prefix="%Z vs f")
+        graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
+                        x_data="Frequency", y_data="Impedance",
+                        x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
+                        suptitle_prefix="Impedance")
+        graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
+                        x_data="Frequency", y_data="Phase",
+                        x_label="Frequency (Hz)", y_label="Phase (°)",
+                        suptitle_prefix="Phase")
+    elif internal_flag:
+        # plot & save figure
+        graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
+                        x_data="Frequency", y_data="%Zactual",
+                        x_label="Frequency (Hz)", y_label="Impedance Error (%)",
+                        suptitle_prefix="%Zactual vs f")
+        graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
+                        x_data="Frequency", y_data="Actual Z",
+                        x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
+                        suptitle_prefix="Actual Impedance")
+        graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
+                        x_data="Frequency", y_data="Actual Phase",
+                        x_label="Frequency (Hz)", y_label="Phase (°)",
+                        suptitle_prefix="Actual Phase")
+
+
 def build_df_choosen(dfs_list, iteration):
     # build new dataframe
     # array of averaged dataframe from every iteration
@@ -173,6 +240,31 @@ def build_df_choosen(dfs_list, iteration):
     return df_choosen
 
 
+def build_single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname):
+    if not(internal_flag):
+        # plot & save figure
+        single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
+                                    x_data="Frequency", y_data="Impedance",
+                                    x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
+                                    suptitle_prefix="SG Impedance")
+
+        single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
+                                    x_data="Frequency", y_data="Phase",
+                                    x_label="Frequency (Hz)", y_label="Phase (°)",
+                                    suptitle_prefix="SG Phase")
+    elif internal_flag:
+        # plot & save figure
+        single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
+                                    x_data="Frequency", y_data="Actual Z",
+                                    x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
+                                    suptitle_prefix="SG Actual Impedance")
+
+        single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
+                                    x_data="Frequency", y_data="Actual Phase",
+                                    x_label="Frequency (Hz)", y_label="Phase (°)",
+                                    suptitle_prefix="SG Actual Phase")
+
+
 def get_z_phase_avg_from_df_choosen(df_choosen):
     # save mid value from averaged_dataframe
     # array to store mid value of z from every averaged_dataframe
@@ -181,8 +273,12 @@ def get_z_phase_avg_from_df_choosen(df_choosen):
 
     nrows = len(df_choosen[0])
     for df in df_choosen:
-        arr_z_avg.append( df["Impedance"][nrows//2] )
-        arr_phase_avg.append( df["Phase"][nrows//2] )
+        if not(internal_flag):
+            arr_z_avg.append( df["Impedance"][nrows//2] )
+            arr_phase_avg.append( df["Phase"][nrows//2] )
+        elif internal_flag:
+            arr_z_avg.append( df["Actual Z"][nrows//2] )
+            arr_phase_avg.append( df["Actual Phase"][nrows//2] )
     
     return arr_z_avg, arr_phase_avg
 
@@ -374,24 +470,15 @@ def build_df_from_file_json(header, data_key, file_path="tmp/rc_variation.json")
 
 
 def process_analysis(folder_path_i, variation_data, dfs_list, iteration):
-    arr_z_ref, arr_phase_ref, dfs_list = get_data_ref(variation_data, dfs_list, iteration)
+    arr_z_ref, arr_phase_ref = get_data_ref(variation_data)
+
+    dfs_list = create_error_z_column(arr_z_ref, dfs_list, iteration)
 
 
     saved_dirname = prepare_result_folder(data_path)
     
     # plot & save figure
-    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
-                    x_data="Frequency", y_data="%Z",
-                    x_label="Frequency (Hz)", y_label="Impedance Error (%)",
-                    suptitle_prefix="%Z vs f")
-    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
-                    x_data="Frequency", y_data="Impedance",
-                    x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
-                    suptitle_prefix="Impedance")
-    graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
-                    x_data="Frequency", y_data="Phase",
-                    x_label="Frequency (Hz)", y_label="Phase (°)",
-                    suptitle_prefix="Phase")
+    build_graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname)
 
     
     arr_z_mid, arr_phase_mid, dfs_list = get_data_mid(dfs_list, iteration)
@@ -401,15 +488,7 @@ def process_analysis(folder_path_i, variation_data, dfs_list, iteration):
     df_choosen = build_df_choosen(dfs_list, iteration)
 
     # plot & save figure
-    single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
-                                x_data="Frequency", y_data="Impedance",
-                                x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
-                                suptitle_prefix="SG Impedance")
-
-    single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
-                                x_data="Frequency", y_data="Phase",
-                                x_label="Frequency (Hz)", y_label="Phase (°)",
-                                suptitle_prefix="SG Phase")
+    build_single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname)
 
 
     # store data_avg of parameter: z, phase. Stored to variatioin_rc_json
@@ -426,8 +505,6 @@ def process_analysis(folder_path_i, variation_data, dfs_list, iteration):
         get_arr_err_from_all_parameters(arr_z_ref, arr_z_avg, arr_phase_ref, arr_phase_avg, variation_data)
 
     
-
-
     update_rc_overview_json(files, iteration, variation_str)
     update_rc_variation_json(variation_str, variation_data,
                             arr_z_ref, arr_phase_ref,
@@ -454,7 +531,27 @@ def prepare_df_from_rc_variation_json():
     return df_z_phase, df_r_c
 
 
+# considering internal factor
+def naming_conditioning_for_image_and_markdown():
+    # change filename if considering internal factor
+    if not(internal_flag):
+        fn1 = "TB Impedance Phase"
+        fn2 = "TB RC Value"
+        fn3 = "BC Error Value"
+    elif internal_flag:
+        fn1 = "TB Actual Impedance Phase"
+        fn2 = "TB Actual RC Value"
+        fn3 = "BC Actual Error Value"
+
+    return fn1, fn2, fn3
+
+
+
 if __name__ == "__main__":
+    # first, build rc_internal_factor.json
+    if internal_flag: get_internal_factor()
+
+    # start
     # replace path_value in folder_path
     i = 0
     for f in folder_path:
@@ -466,10 +563,11 @@ if __name__ == "__main__":
 
     # process analysis
     for idx in range(len(folder_path)):
-        print("Processing %s ..." %folder_name[idx])
+        print("\nProcessing %s ..." %folder_name[idx])
 
         # preprocessing
         files, dfs, dfs_list = prepare_data(folder_path[idx])
+        dfs_list = create_actual_params_columns(dfs_list)
         variation_str, variation_data = preprocessing_rc_data(files)
         saved_dirname = prepare_result_folder(data_path)
 
@@ -477,21 +575,22 @@ if __name__ == "__main__":
 
         # main processing
         process_analysis(folder_path[idx], variation_data, dfs_list, iteration)
-        # process_analysis(folder_path[idx])
-
-        print()
 
 
     # create dataframe from final rc_variation.json
     df_z_phase, df_r_c = prepare_df_from_rc_variation_json()
+    
+    # save them as image and markdown file
+    fn1, fn2, fn3 = naming_conditioning_for_image_and_markdown()
+    
     # save them as image
-    save_df_as_image(df_z_phase, filename="TB Impedance Phase", saved_dirname=saved_dirname)
-    save_df_as_image(df_r_c, filename="TB RC Value", saved_dirname=saved_dirname)
+    save_df_as_image(df_z_phase, filename=fn1, saved_dirname=saved_dirname)
+    save_df_as_image(df_r_c, filename=fn2, saved_dirname=saved_dirname)
     # tabulate dataframe in markdown file
-    create_markdown_table_from_dataframe(df_z_phase, filename="TB Impedance Phase", saved_dirname=saved_dirname)
-    create_markdown_table_from_dataframe(df_r_c, filename="TB RC Value", saved_dirname=saved_dirname)
+    create_markdown_table_from_dataframe(df_z_phase, filename=fn1, saved_dirname=saved_dirname)
+    create_markdown_table_from_dataframe(df_r_c, filename=fn2, saved_dirname=saved_dirname)
 
     # make bar chart to compare error
     y_data = ["z_err", "phase_err", "r_err", "c_err"]
     title = ["Impedance Error", "Phase Error", "R Value Error", "C Value Error"]
-    graph_to_overview_error_value_batch(variation_str, saved_dirname, y_data, title)
+    graph_to_overview_error_value_batch(variation_str, saved_dirname, y_data, title, filename=fn3)
