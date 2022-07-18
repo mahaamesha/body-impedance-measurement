@@ -8,9 +8,13 @@ from processing import prepare_data
 # change this as needed
 data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/repetisi RC"
 
-# dont change this below
-folder_name = "calibration/"
-folder_path = os.path.join(data_path, folder_name)
+
+def define_data_path(data_path):
+    # dont change this below
+    folder_name = "calibration/"
+    folder_path = os.path.join(data_path, folder_name)
+
+    return folder_path
 
 
 def init_internal_factor_json():
@@ -81,7 +85,8 @@ def store_internal_factor_to_json(df_internal_factor, file_path="tmp/rc_internal
     print("Writing %s ... Done" %file_path)
 
 
-def get_internal_factor():
+def get_internal_factor(data_path):
+    folder_path = define_data_path(data_path)
     file_path = init_internal_factor_json()
 
     files, dfs, dfs_list = prepare_data(folder_path)
@@ -92,4 +97,4 @@ def get_internal_factor():
 
 
 if __name__ == "__main__":
-    get_internal_factor()
+    get_internal_factor(data_path)

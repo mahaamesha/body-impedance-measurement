@@ -549,7 +549,7 @@ def naming_conditioning_for_image_and_markdown():
 
 if __name__ == "__main__":
     # first, build rc_internal_factor.json
-    if internal_flag: get_internal_factor()
+    if internal_flag: get_internal_factor(data_path)
 
     # start
     # replace path_value in folder_path
