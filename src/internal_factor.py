@@ -29,7 +29,7 @@ def init_internal_factor_json():
 
 
 # input Rcal and Phase for calibration
-def build_df_internal_factor(dfs_list, files):
+def build_df_internal_factor(dfs_list):
     # ask input for actual value from measurement
     print()
     r_cal = float( input("Input Actual Rcal (Ohm): ") )
@@ -87,6 +87,6 @@ if __name__ == "__main__":
 
     files, dfs, dfs_list = prepare_data(folder_path)
     
-    df_internal_factor = build_df_internal_factor(dfs_list, files)
+    df_internal_factor = build_df_internal_factor(dfs_list)
 
     store_internal_factor_to_json(df_internal_factor, file_path)
