@@ -174,7 +174,8 @@ def graph_to_overview_error_value(variation_str, saved_dirname, y_data="z_err", 
 
 def graph_to_overview_error_value_batch(variation_str, saved_dirname, 
                                         y_data=["z_err", "phase_err", "r_err", "c_err"], 
-                                        title=["Impedance Error", "Phase Error", "R Value Error", "C Value Error"]):
+                                        title=["Impedance Error", "Phase Error", "R Value Error", "C Value Error"],
+                                        filename="BC Error Value"):
     data = read_filejson(file_path="tmp/rc_variation.json")
     vals = list(data.values())
 
@@ -252,11 +253,11 @@ def graph_to_overview_error_value_batch(variation_str, saved_dirname,
 
     # save figure
     try:    # for notebook environment
-        save_path = os.path.join("../media/", saved_dirname, "BC Error Value.jpg")
+        save_path = os.path.join("../media/", saved_dirname, filename + ".jpg")
         fig.savefig(save_path)
         plt.show()
     except: # for local python environment
-        save_path = os.path.join("media/", saved_dirname, "BC Error Value.jpg")
+        save_path = os.path.join("media/", saved_dirname, filename + ".jpg")
         fig.savefig(save_path)
 
     print("Saving %s ... Done" %("BC Error Value.jpg"))
