@@ -43,8 +43,8 @@ def build_df_internal_factor(dfs_list):
         z = dfs_list[i].loc[:, "Impedance"]
         phase = dfs_list[i].loc[:, "Phase"]
 
-        dfs_list[i]["ΔZ"] = abs(z - r_cal)
-        dfs_list[i]["Δφ"] = abs(phase - phase_cal)
+        dfs_list[i]["ΔZ"] = z - r_cal
+        dfs_list[i]["Δφ"] = phase - phase_cal
 
         # append df[i] to df_temporary
         df_internal_factor_list.append(dfs_list[i])
@@ -81,8 +81,7 @@ def store_internal_factor_to_json(df_internal_factor, file_path="tmp/rc_internal
     print("Writing %s ... Done" %file_path)
 
 
-
-if __name__ == "__main__":
+def get_internal_factor():
     file_path = init_internal_factor_json()
 
     files, dfs, dfs_list = prepare_data(folder_path)
@@ -90,3 +89,7 @@ if __name__ == "__main__":
     df_internal_factor = build_df_internal_factor(dfs_list)
 
     store_internal_factor_to_json(df_internal_factor, file_path)
+
+
+if __name__ == "__main__":
+    get_internal_factor()
