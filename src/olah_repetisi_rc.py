@@ -567,7 +567,8 @@ if __name__ == "__main__":
 
         # preprocessing
         files, dfs, dfs_list = prepare_data(folder_path[idx])
-        dfs_list = create_actual_params_columns(dfs_list)
+        if internal_flag:
+            dfs_list = create_actual_params_columns(dfs_list)
         variation_str, variation_data = preprocessing_rc_data(files)
         saved_dirname = prepare_result_folder(data_path)
 
