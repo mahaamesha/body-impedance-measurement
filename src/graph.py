@@ -260,4 +260,4 @@ def graph_to_overview_error_value_batch(variation_str, saved_dirname,
         save_path = os.path.join("media/", saved_dirname, filename + ".jpg")
         fig.savefig(save_path)
 
-    print("Saving %s ... Done" %("BC Error Value.jpg"))
+    print("Saving %s ... Done" %(filename + ".jpg"))
