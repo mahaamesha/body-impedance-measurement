@@ -248,6 +248,7 @@ def graph_to_overview_error_value_batch(variation_str, saved_dirname,
         df_plot.plot(kind="bar", ax=axs[bin[0]][bin[1]])
         axs[bin[0]][bin[1]].set_title("BC %s" %title[param])
         axs[bin[0]][bin[1]].set_ylabel(title[param] + " (%)")
+        axs[bin[0]][bin[1]].grid(True)
         
     
 
