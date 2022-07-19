@@ -581,7 +581,7 @@ if __name__ == "__main__":
     # create dataframe from final rc_variation.json
     df_z_phase, df_r_c = prepare_df_from_rc_variation_json()
     
-    # save them as image and markdown file
+    # change filename if considering internal factor
     fn1, fn2, fn3 = naming_conditioning_for_image_and_markdown()
     
     # save them as image
