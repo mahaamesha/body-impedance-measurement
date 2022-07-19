@@ -5,7 +5,7 @@ from formula import *
 import json_function as fjson
 from graph import *
 from post_process import *
-from internal_factor import get_internal_factor
+import internal_factor as infac
 
 
 data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/repetisi RC"
@@ -549,7 +549,7 @@ def naming_conditioning_for_image_and_markdown():
 
 if __name__ == "__main__":
     # first, build rc_internal_factor.json
-    if internal_flag: get_internal_factor(data_path)
+    if internal_flag: infac.get_internal_factor(data_path)
 
     # start
     # replace path_value in folder_path
