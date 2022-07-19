@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 import json_function as fjson
-from processing import prepare_data
+import processing as proc
 
 
 # change this as needed
@@ -89,7 +89,7 @@ def get_internal_factor(data_path):
     folder_path = define_data_path(data_path)
     file_path = init_internal_factor_json()
 
-    files, dfs, dfs_list = prepare_data(folder_path)
+    files, dfs, dfs_list = proc.prepare_data(folder_path)
     
     df_internal_factor = build_df_internal_factor(dfs_list)
 
@@ -97,6 +97,6 @@ def get_internal_factor(data_path):
 
 
 if __name__ == "__main__":
-    # get_internal_factor(data_path)
+    get_internal_factor(data_path)
     
     print("Run internal_factor.py ... Done")
