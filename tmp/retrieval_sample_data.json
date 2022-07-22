@@ -1,13 +1,13 @@
 {
-    "id001 angga": {
-        "weight": 58,
-        "height": 181,
+    "id001 dwi": {
+        "weight": 60,
+        "height": 165,
         "age": 21,
         "gender": 1
     },
-    "id002 dwi": {
-        "weight": 60,
-        "height": 165,
+    "id002 angga": {
+        "weight": 58,
+        "height": 181,
         "age": 21,
         "gender": 1
     },
