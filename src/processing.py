@@ -17,12 +17,11 @@ folder_path = folder_name.copy()
 fstart = 20e3
 fend = 50e3
 
-internal_flag = True
-
 
 def choose_internal_flag():
     while True:
-        key = ord( input("Considering internal_flag (1/0)? ") )
+        key = ord( input("\nConsidering internal_flag (1/0)? ") )
+        print()
     
         if key == ord("1"):
             internal_flag = True
