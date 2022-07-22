@@ -1,4 +1,5 @@
 import os
+import sys
 import pandas as pd
 
 from formula import *
@@ -8,8 +9,9 @@ from post_process import *
 import internal_factor as infac
 
 
-data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/hand to hand"
-folder_name = ["data variasi grip/"]
+# change this as needed
+data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/pengukuran tangan"
+folder_name = ["id001 dwi/", "id002 angga/", "id003 avima/", "id004 aldian/"]
 folder_path = folder_name.copy()
 
 fstart = 20e3
@@ -18,9 +20,25 @@ fend = 50e3
 internal_flag = True
 
 
+def choose_internal_flag():
+    while True:
+        key = ord( input("Considering internal_flag (1/0)? ") )
+    
+        if key == ord("1"):
+            internal_flag = True
+            return internal_flag
+        elif key == ord("0"):
+            internal_flag = False
+            return internal_flag
+
+
 def prepare_data(folder_path_i):
     # scan all files
-    path, dirs, files = next(os.walk(folder_path_i))
+    try:
+        path, dirs, files = next(os.walk(folder_path_i))
+    except:
+        sys.exit("Error: Cannot find %s" %folder_path_i)
+        
 
     # append datasets to the list
     dfs = {}
@@ -280,6 +298,61 @@ def update_retrieval_variation_json(variation_str,
     print("Writing", file_path, "... Done")
 
 
+# loop for every z value of every variation
+# read data z from retrieval_variation.json
+def update_retrieval_body_composition_json(variation_str):
+    # read data z from json file
+    data = fjson.read_filejson(file_path="tmp/retrieval_variation.json")
+    keys = list ( data.keys() )     # access variation_name
+    values = list( data.values() )
+
+    # read sample data (id, w, h, y, s) from json file
+    sample_data = fjson.read_filejson(file_path="tmp/retrieval_sample_data.json")
+    sample_keys = list( sample_data.keys() )
+
+    # obj to store body composition data. see the format in json_function.json
+    obj = {}
+
+    for i in range(len(values)):
+        # sample data
+        # sample_id = sample_keys[i//len(keys)]
+        sample_id = sample_keys[i//len(variation_str)]
+        w = sample_data[sample_id]["weight"]
+        h = sample_data[sample_id]["height"]
+        y = sample_data[sample_id]["age"]
+        s = sample_data[sample_id]["gender"]
+
+        # z value of every variation
+        z = values[i]["z_avg"]
+
+        # calculate body composition
+        ffm_kg, fm_kg, tbw_kg = calculate_bc_kg(w, h, z, y, s)
+        ffm_percentage, fm_percentage, tbw_percentage = calculate_bc_percentage(w, ffm_kg, fm_kg, tbw_kg)
+
+        # create new key in obj
+        obj[keys[i]] = {}
+        # store data in obj. see the format in json_function.json
+        obj[keys[i]]["id"] = sample_id
+        obj[keys[i]]["weight"] = w
+        obj[keys[i]]["height"] = h
+        obj[keys[i]]["age"] = y
+        obj[keys[i]]["gender"] = s
+
+        obj[keys[i]]["impedance"] = z
+        obj[keys[i]]["ffm"] = ffm_kg
+        obj[keys[i]]["ffm_percentage"] = ffm_percentage
+        obj[keys[i]]["fm"] = fm_kg
+        obj[keys[i]]["fm_percentage"] = fm_percentage
+        obj[keys[i]]["tbw"] = tbw_kg
+        obj[keys[i]]["tbw_percentage"] = tbw_percentage
+
+    # update retrieval_body_composition.json
+    file_path = "tmp/retrieval_body_composition.json"
+    fjson.write_obj_to_filejson(file_path, obj)
+
+    print("Writing %s ... Done" %file_path)
+
+
 def build_df_from_file_json(header, data_key, file_path="tmp/retrieval_variation.json"):
     data = fjson.read_filejson(file_path)
 
@@ -342,6 +415,7 @@ def process_analysis(folder_path_i, variation_str, dfs_list, iteration):
                                     arr_z_mid, arr_phase_mid,
                                     arr_z_avg, arr_phase_avg,
                                     arr_r, arr_c)
+    update_retrieval_body_composition_json(variation_str)
 
 
 # considering internal factor
@@ -350,71 +424,18 @@ def naming_conditioning_for_image_and_markdown():
     if not(internal_flag):
         fn1 = "TB Parameters"
         fn2 = "TB Body Composition"
-        fn3 = ""
+        fn3 = "BC Body Composition"
     elif internal_flag:
         fn1 = "TB Actual Parameters"
         fn2 = "TB Actual Body Composition"
-        fn3 = ""
+        fn3 = "BC Actual Body Composition"
 
     return fn1, fn2, fn3
 
 
-# ask input
-def input_user():
-    print()
-    w = float( input("Input weight (kg)\t: ") )
-    h = float( input("Input height (cm)\t: ") )
-    y = float( input("Input age    (yo)\t: ") )
-    s = float( input("Input gender (1/0)\t: ") )
-    print()
-
-    return w, h, y, s
-
-
-# loop for every z value of every variation
-# read data z from retrieval_variation.json
-def update_retrieval_body_composition_json(w, h, y, s):
-    # read data z from json file
-    data = fjson.read_filejson(file_path="tmp/retrieval_variation.json")
-    keys = list ( data.keys() )     # access variation_name
-    values = list( data.values() )
-
-    # obj to store body composition data. see the format in json_function.json
-    obj = {}
-
-    for i in range(len(values)):
-        # z value of every variation
-        z = values[i]["z_avg"]
-
-        # calculate body composition
-        ffm_kg, fm_kg, tbw_kg = calculate_bc_kg(w, h, z, y, s)
-        ffm_percentage, fm_percentage, tbw_percentage = calculate_bc_percentage(w, ffm_kg, fm_kg, tbw_kg)
-
-        # create new key in obj
-        obj[keys[i]] = {}
-        # store data in obj. see the format in json_function.json
-        obj[keys[i]]["id"] = keys[i]
-        obj[keys[i]]["weight"] = w
-        obj[keys[i]]["height"] = h
-        obj[keys[i]]["age"] = y
-        obj[keys[i]]["gender"] = s
-        obj[keys[i]]["impedance"] = z
-        obj[keys[i]]["ffm"] = ffm_kg
-        obj[keys[i]]["ffm_percentage"] = ffm_percentage
-        obj[keys[i]]["fm"] = fm_kg
-        obj[keys[i]]["fm_percentage"] = fm_percentage
-        obj[keys[i]]["tbw"] = tbw_kg
-        obj[keys[i]]["tbw_percentage"] = tbw_percentage
-
-    # update retrieval_body_composition.json
-    file_path = "tmp/retrieval_body_composition.json"
-    fjson.write_obj_to_filejson(file_path, obj)
-
-    print("Writing %s ... Done" %file_path)
-
-
 
 if __name__ == "__main__":
+    internal_flag = choose_internal_flag()
     # first, build rc_internal_factor.json
     if internal_flag: infac.get_internal_factor(data_path)
 
@@ -443,6 +464,8 @@ if __name__ == "__main__":
 
         # main processing
         process_analysis(folder_path[idx], variation_str, dfs_list, iteration)
+    
+    print("\nPost processing ...")
 
 
     # change filename if considering internal factor
@@ -457,11 +480,6 @@ if __name__ == "__main__":
     # tabulate dataframe in markdown file
     create_markdown_table_from_dataframe(df_params, filename=fn1, saved_dirname=saved_dirname)
 
-
-    # update retrieval_body_composition.json
-    w, h, y, s = input_user()
-    update_retrieval_body_composition_json(w, h, y, s)
-
     # create dataframe from final retrieval_body_composition.json
     header = ["ID", "FFM (kg)", "FFM (%)", "FM (kg)", "FM (%)", "TBW (kg)", "TBW (%)"]
     data_key = ["id", "ffm", "ffm_percentage", "fm", "fm_percentage", "tbw", "tbw_percentage"]
@@ -470,3 +488,6 @@ if __name__ == "__main__":
     save_df_as_image(df_bc, filename=fn2, saved_dirname=saved_dirname)
     # tabulate dataframe in markdown file
     create_markdown_table_from_dataframe(df_bc, filename=fn2, saved_dirname=saved_dirname)
+
+    # create bar chart to overview body composition
+    graph_overview_body_composition(saved_dirname, suptitle_text=fn3)

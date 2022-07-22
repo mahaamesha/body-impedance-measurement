@@ -163,6 +163,24 @@ def initialize_retrieval_tmp_files():
     print("Initialize tmp files ... Done")
 
 
+def initialize_retrieval_sample_data_files(file_path="tmp/retrieval_sample_data.json"):
+    # define obj for formatting purposes
+    retrieval_sample_data_obj = \
+    {
+        "sample id": {
+            "weight": None,     # in kg
+            "height": None,     # in cm
+            "age": None,        # in years old
+            "gender": None,     # male=1, female=0
+        }
+    }
+
+    # initialization json files
+    write_obj_to_filejson(file_path, obj=retrieval_sample_data_obj)
+
+    print("Initialize %s ... Done" %file_path)
+
+
 def initialize_internal_factor(file_path="tmp/retrieval_internal_factor.json"):
     # formatting purposes
     internal_factor_obj = \

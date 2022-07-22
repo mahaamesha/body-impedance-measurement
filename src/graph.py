@@ -262,3 +262,53 @@ def graph_to_overview_error_value_batch(variation_str, saved_dirname,
         fig.savefig(save_path)
 
     print("Saving %s ... Done" %(filename + ".jpg"))
+
+
+def graph_overview_body_composition(saved_dirname, suptitle_text="BC Body Composition"):
+    file_path = "tmp/retrieval_body_composition.json"
+    data = read_filejson(file_path)
+
+    obj_plot = {}
+    # obj_plot = {
+    #     "g1": ["ffm", "fm", "tbw"],
+    #     "g2": ["ffm", "fm", "tbw"]
+    # }
+
+    # body composition labels
+    bc_labels = ["ffm_percentage", "fm_percentage", "tbw_percentage"]
+    labels = ["FFM", "FM", "TBW"]
+
+    for key in data.keys():
+        # create new key: "g1", "g2", ...
+        obj_plot[key] = []
+
+        # append body_composition_data to arr: ffm, fm, tbw
+        for label in bc_labels:
+            obj_plot[key].append( data[key][label] )
+
+    # print(obj_plot)
+
+
+    # figure and axs
+    fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(12,8), sharex=True)
+    fig.suptitle(suptitle_text, fontsize="xx-large", weight="bold")
+
+    # create dataframe
+    df_plot = pd.DataFrame(obj_plot, index=labels)
+    # print(df_plot)
+
+    # create bar chart
+    df_plot.plot(kind="bar", ax=ax)
+    ax.set_ylabel("Percentage (%)")
+    ax.grid(True)
+    
+    # save figure
+    try:    # for notebook environment
+        save_path = os.path.join("../media/", saved_dirname, suptitle_text + ".jpg")
+        fig.savefig(save_path)
+        plt.show()
+    except: # for local python environment
+        save_path = os.path.join("media/", saved_dirname, suptitle_text + ".jpg")
+        fig.savefig(save_path)
+
+    print("Saving %s ... Done" %(suptitle_text + ".jpg"))
