@@ -1,0 +1,26 @@
+{
+    "id001 angga": {
+        "weight": 58,
+        "height": 181,
+        "age": 21,
+        "gender": 1
+    },
+    "id002 dwi": {
+        "weight": 60,
+        "height": 165,
+        "age": 21,
+        "gender": 1
+    },
+    "id003 avima": {
+        "weight": 58,
+        "height": 169,
+        "age": 21,
+        "gender": 1
+    },
+    "id004 aldian": {
+        "weight": 62,
+        "height": 167,
+        "age": 21,
+        "gender": 1
+    }
+}
