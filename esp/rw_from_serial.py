@@ -1,5 +1,6 @@
 import os
 import sys
+from time import sleep
 import serial
 
 # arduino_port = "/dev/cu.usbmodem14201"      # for mac
@@ -45,6 +46,7 @@ while True:
                     f.write("")
 
                 print("Retrieving data ...\n")
+                sleep(0.5)
                     
             elif key == "n": sys.exit("Exiting ... Done")
 
