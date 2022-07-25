@@ -6,6 +6,8 @@ import processing as proc
 
 
 # change this as needed
+# as default value, for testing in this file only.
+# in another file, I parse arguments
 data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/repetisi RC"
 
 
