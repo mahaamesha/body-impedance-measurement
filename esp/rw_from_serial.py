@@ -46,7 +46,7 @@ while True:
                     f.write("")
 
                 print("Retrieving data ...\n")
-                sleep(0.5)
+                # sleep(5)
                     
             elif key == "n": sys.exit("Exiting ... Done")
 
