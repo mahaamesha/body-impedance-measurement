@@ -1,6 +1,7 @@
 import os
 import sys
 import pandas as pd
+from csv_conditioning import choose_csv_conditioning
 
 from formula import *
 import json_function as fjson
@@ -10,7 +11,7 @@ import internal_factor as infac
 
 
 # change this as needed
-data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/pengukuran tangan"
+data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/pengukuran tangan modul"
 folder_name = ["id001 dwi/", "id002 angga/", "id003 avima/", "id004 aldian/"]
 folder_path = folder_name.copy()
 
@@ -437,6 +438,7 @@ if __name__ == "__main__":
     internal_flag = choose_internal_flag()
     # first, build rc_internal_factor.json
     if internal_flag: infac.get_internal_factor(data_path)
+
 
     # start
     # replace path_value in folder_path
