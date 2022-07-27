@@ -14,7 +14,7 @@ file_path = os.path.join(path, file_name)
 complete_text = "Frequency sweep complete!"
 
 # header contains parameters want to saved
-header = ["Frequency", "Real", "Imaginer", "Impedance"]
+header = ["Frequency", "Impedance", "Real", "Imaginer"]
 
 
 ser = serial.Serial(arduino_port, baud)
@@ -58,9 +58,11 @@ while True:
                 data = ""
                 for i in range(len(header)):
                     if i != len(header)-1:
-                        data += "%s, " %header[i]
+                        data += "%s," %header[i]
                     else:
                         data += "%s" %header[i]
 
+            # if data != complete_text
+            # data is FREQ, IMPEDANCE, REAL, IMAG
             print(data)     # print the data written to the file
             f.write(data + "\n")
