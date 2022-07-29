@@ -65,9 +65,8 @@ def prepare_data(folder_path_i):
 
 
 # revise z and phase value by internal factor
-def create_actual_params_columns(dfs_list):
+def create_actual_params_columns(dfs_list, file_path="tmp/retrieval_internal_factor.json"):
     # load data internal factor
-    file_path="tmp/retrieval_internal_factor.json"
     data = fjson.read_filejson(file_path)
 
     for df in dfs_list:         # loop in each dataframe
@@ -198,7 +197,7 @@ def build_df_choosen(dfs_list, iteration):
     return df_choosen
 
 
-def build_single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname):
+def build_single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname, internal_flag):
     if not(internal_flag):
         # plot & save figure
         single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
@@ -223,7 +222,7 @@ def build_single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i,
                                     suptitle_prefix="SG Actual Phase")
 
 
-def get_z_phase_avg_from_df_choosen(df_choosen):
+def get_z_phase_avg_from_df_choosen(df_choosen, internal_flag):
     # save mid value from averaged_dataframe
     # array to store mid value of z from every averaged_dataframe
     arr_z_avg = []
@@ -399,11 +398,11 @@ def process_analysis(folder_path_i, variation_str, dfs_list, iteration):
 
 
     # plot & save figure
-    build_single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname)
+    build_single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname, internal_flag)
 
 
     # store data_avg of parameter: z, phase. Stored to variatioin_rc_json
-    arr_z_avg, arr_phase_avg = get_z_phase_avg_from_df_choosen(df_choosen)
+    arr_z_avg, arr_phase_avg = get_z_phase_avg_from_df_choosen(df_choosen, internal_flag)
 
     # calculate r,c from z,phase
     fmid = find_fmid_from_data_retrieval(dfs_list)
@@ -457,7 +456,7 @@ if __name__ == "__main__":
         # preprocessing
         files, dfs, dfs_list = prepare_data(folder_path[idx])
         if internal_flag:
-            dfs_list = create_actual_params_columns(dfs_list)
+            dfs_list = create_actual_params_columns(dfs_list, file_path="tmp/retrieval_internal_factor.json")
         variation_str = preprocessing_data_retrieval(files)
         saved_dirname = prepare_result_folder(data_path)
 
