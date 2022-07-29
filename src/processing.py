@@ -242,9 +242,8 @@ def get_rc_value(arr_z, arr_phase, fmid):
     return arr_r, arr_c
 
 
-def update_retrieval_overview_json(files, iteration, variation_str):
+def update_overview_json(files, iteration, variation_str, file_path="tmp/retrieval_overview.json"):
     # save important information to json file
-    file_path = "tmp/retrieval_overview.json"
 
     fjson.write_keyvalue(file_path, "folder_path", folder_name)
     fjson.write_keyvalue(file_path, "sweep_frequency", [fstart, fend])
@@ -397,7 +396,8 @@ def process_analysis(folder_path_i, variation_str, dfs_list, iteration):
     arr_r, arr_c = get_rc_value(arr_z_avg, arr_phase_avg, fmid)  
 
     # update json file data
-    update_retrieval_overview_json(files, iteration, variation_str)
+    update_overview_json(files, iteration, variation_str, 
+                        file_path="tmp/retrieval_overview.json")
     update_retrieval_variation_json(variation_str,
                                     arr_z_mid, arr_phase_mid,
                                     arr_z_avg, arr_phase_avg,
