@@ -11,27 +11,25 @@ import processing as proc
 data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/repetisi RC"
 
 
+def choose_internal_flag():
+    while True:
+        key = ord( input("\nConsidering internal factor (1/0)? ") )
+        print()
+    
+        if key == ord("1"):
+            internal_flag = True
+            return internal_flag
+        elif key == ord("0"):
+            internal_flag = False
+            return internal_flag
+
+
 def define_data_path(data_path):
     # dont change this below
     folder_name = "calibration/"
     folder_path = os.path.join(data_path, folder_name)
 
     return folder_path
-
-
-def init_internal_factor_json():
-    print("Initialize JSON file of internal factor ...")
-    print("1. rc_internal_factor.json")
-    print("2. retrieval_internal_factor.json")
-    key = int( input("Choose filename: ") )
-    if key == 1:
-        file_path = "tmp/rc_internal_factor.json"
-    elif key == 2:
-        file_path = "tmp/retrieval_internal_factor.json"
-
-    fjson.initialize_internal_factor(file_path)
-
-    return file_path
 
 
 # input Rcal and Phase for calibration
@@ -87,9 +85,11 @@ def store_internal_factor_to_json(df_internal_factor, file_path="tmp/rc_internal
     print("Writing %s ... Done" %file_path)
 
 
-def get_internal_factor(data_path):
+def get_internal_factor(data_path, file_path):
     folder_path = define_data_path(data_path)
-    file_path = init_internal_factor_json()
+    
+    # initialize json file
+    fjson.initialize_internal_factor(file_path)
 
     files, dfs, dfs_list = proc.prepare_data(folder_path)
     
@@ -98,7 +98,11 @@ def get_internal_factor(data_path):
     store_internal_factor_to_json(df_internal_factor, file_path)
 
 
+
+
 if __name__ == "__main__":
-    get_internal_factor(data_path)
+    # file_path="tmp/rc_internal_factor.json"
+    file_path="tmp/retrieval_internal_factor.json"
+    get_internal_factor(data_path, file_path)
     
     print("Run internal_factor.py ... Done")
