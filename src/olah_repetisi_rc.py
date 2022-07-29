@@ -1,6 +1,4 @@
 import os
-import sys
-import pandas as pd
 
 from formula import *
 import json_function as fjson
