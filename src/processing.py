@@ -91,7 +91,7 @@ def find_fmid_from_data_retrieval(dfs_list):
     return fmid
 
 
-def get_data_mid(dfs_list, iteration):
+def get_data_mid(dfs_list, iteration, internal_flag):
     # get z_mid & phase_mid from every dataframe. data_mid is data at fmid
     # arr = [[...], [...], ...]
     arr_z_mid = []
@@ -143,7 +143,7 @@ def prepare_result_folder(data_path):
     return saved_dirname
 
 
-def build_graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname):
+def build_graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname, internal_flag):
     if not(internal_flag):
         # plot & save figure
         graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
@@ -372,12 +372,12 @@ def process_analysis(folder_path_i, variation_str, dfs_list, iteration):
     saved_dirname = prepare_result_folder(data_path)
 
     # plot & save figure
-    build_graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname)
+    build_graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname, internal_flag)
     
     
     # get z_mid & phase_mid from every dataframe. data_mid is data at fmid
     # arr = [[...], [...], ...]
-    arr_z_mid, arr_phase_mid, dfs_list = get_data_mid(dfs_list, iteration)
+    arr_z_mid, arr_phase_mid, dfs_list = get_data_mid(dfs_list, iteration, internal_flag)
     
     # every variation have n dataframes. n = num_of_iteration
     # build single dataframe for every variation by averaging them

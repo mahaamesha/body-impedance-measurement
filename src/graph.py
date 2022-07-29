@@ -64,7 +64,7 @@ def single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved
                                 suptitle_prefix="SG"):
 
     # figure and axs
-    fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(10,4), constrained_layout=True)
+    fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(10,4), constrained_layout=False)
 
     idx = 0
     for df in df_choosen:

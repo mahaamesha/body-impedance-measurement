@@ -205,7 +205,7 @@ def get_data_mid(dfs_list, iteration):
 #     return saved_dirname
 
 
-def build_graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname):
+def build_graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname, internal_flag):
     if not(internal_flag):
         # plot & save figure
         graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname,
@@ -493,7 +493,7 @@ def process_analysis(folder_path_i, variation_data, dfs_list, iteration):
     saved_dirname = proc.prepare_result_folder(data_path)
     
     # plot & save figure
-    build_graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname)
+    build_graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname, internal_flag)
 
     
     arr_z_mid, arr_phase_mid, dfs_list = get_data_mid(dfs_list, iteration)
@@ -563,7 +563,7 @@ def naming_conditioning_for_image_and_markdown(internal_flag):
 
 
 if __name__ == "__main__":
-    internal_flag = proc.choose_internal_flag()
+    internal_flag = infac.choose_internal_flag()
     # first, build rc_internal_factor.json
     if internal_flag: infac.get_internal_factor(data_path, file_path="tmp/rc_internal_factor.json")
 

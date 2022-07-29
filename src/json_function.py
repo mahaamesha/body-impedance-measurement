@@ -195,6 +195,46 @@ def initialize_internal_factor(file_path="tmp/retrieval_internal_factor.json"):
     print("Initialize %s ... Done" %file_path)
 
 
+def initialize_training_tmp_files():
+    # define obj for formatting purposes
+    training_overview_obj = \
+    {
+        "folder_path": [None],
+        "sweep_frequency": [None],
+        "variation_str": [None],
+        "num_variation": None,
+        "num_iteration": None
+    }
+
+    training_variation_obj = \
+    {
+        "Rohm": {
+            "r": None,  # from measurement
+
+            "z_ref": None,  # from calculate_z(r, xc) using r,c measurement
+            "z_mid": [],    # from data retrieval. for every iteration
+            "z_avg": None,  # from data retrieval
+            "z_err": None,  # reference: "z_ref", data: "z_avg"
+
+            "phase_ref": None,
+            "phase_mid": [],
+            "phase_avg": None,
+            "phase_err": None,
+            
+            "r_ref": None,                          # from "z_ref" and "phase_ref"
+            "r_avg": None,                          # from "z_avg" and "phase_avg"
+            "r_err_theoryref_measurement": None,    # reference: "r", data: "r_ref"
+            "r_err_theoryavg_measurement": None,    # reference: "r", data: "r_avg"
+        }
+    }
+
+    # initialization json files
+    write_obj_to_filejson(file_path="tmp/training_overview.json", obj=training_overview_obj)
+    write_obj_to_filejson(file_path="tmp/training_variation.json", obj=training_variation_obj)
+
+    print("Initialize tmp files ... Done")
+
+
 # (END) SPECIFIC FUNCTION
 
 
