@@ -14,8 +14,8 @@ data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kulia
 folder_name = ["data training/"]
 folder_path = folder_name.copy()
 
-# fstart = 20e3
-# fend = 50e3
+fstart = 20e3
+fend = 50e3
 
 
 def detect_folder_data_training(data_path):
@@ -165,7 +165,7 @@ def process_analysis(folder_path_i, variation_str, dfs_list, iteration):
     arr_phase_err = get_arr_err(arr_phase_ref, arr_phase_avg)       # if using phase_ref = 0, its error will be INFINITY
 
     # update json file data
-    proc.update_overview_json(files, iteration, variation_str, 
+    proc.update_overview_json(folder_name, fstart, fend, files, iteration, variation_str, 
                                 file_path="tmp/training_overview.json")
     update_training_variation_json(variation_str,
                                     arr_z_ref, arr_phase_ref,

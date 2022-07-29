@@ -1,9 +1,6 @@
 {
     "folder_path": [
-        "id001 dwi/",
-        "id002 angga/",
-        "id003 avima/",
-        "id004 aldian/"
+        "data training/"
     ],
     "sweep_frequency": [
         20000.0,
