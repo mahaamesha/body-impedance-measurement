@@ -1,8 +1,10 @@
 import os
+import sys
 import pandas as pd
 
 from formula import *
 import json_function as fjson
+import processing as proc
 from graph import *
 from post_process import *
 import internal_factor as infac
@@ -18,53 +20,70 @@ fend = 50e3
 internal_flag = True
 
 
-def prepare_data(folder_path_i):
-    # scan all files
-    path, dirs, files = next(os.walk(folder_path_i))
-
-    # append datasets to the list
-    dfs = {}
-    for fn in files:
-        path = folder_path_i + fn
-        temp_df = pd.read_csv(path)
-        dfs[fn[:-4]] = temp_df
-
-    dfs_list = list(dfs.values())
-
-    # delete column contains NaN
-    for df in dfs_list:
-        # get column name
-        column_list = []
-        for col in df.columns:
-            column_list.append(col)
-        
-        # delete column after "Magnitude"
-        # "Magnitude" in index 5
-        for i in range(len(column_list)):
-            if i > 5: del df[column_list[i]]
+# def choose_internal_flag():
+#     while True:
+#         key = ord( input("\nConsidering internal_flag (1/0)? ") )
+#         print()
     
-    return files, dfs, dfs_list
+#         if key == ord("1"):
+#             internal_flag = True
+#             return internal_flag
+#         elif key == ord("0"):
+#             internal_flag = False
+#             return internal_flag
 
 
-# revise z and phase value by internal factor
-def create_actual_params_columns(dfs_list):
-    # load data internal factor
-    file_path="tmp/rc_internal_factor.json"
-    data = fjson.read_filejson(file_path)
+# def prepare_data(folder_path_i):
+#     # scan all files
+#     try:
+#         path, dirs, files = next(os.walk(folder_path_i))
+#     except:
+#         sys.exit("Error: Cannot find %s" %folder_path_i)
+        
 
-    for df in dfs_list:         # loop in each dataframe
-        # create new column
-        df["Actual Z"] = 0
-        df["Actual Phase"] = 0
+#     # append datasets to the list
+#     dfs = {}
+#     for fn in files:
+#         path = folder_path_i + fn
+#         temp_df = pd.read_csv(path)
+#         dfs[fn[:-4]] = temp_df
 
-        for row in range(len(df)):      # loop in each row
-            # assign actual value
-            df.loc[row, "Actual Z"] = df.loc[row, "Impedance"] - data["delta_z"][row]
-            df.loc[row, "Actual Phase"] = df.loc[row, "Phase"] - data["delta_phase"][row]
-            # print( df.loc[row, "Impedance"], data["delta_z"][row] )
+#     dfs_list = list(dfs.values())
 
-        # print(df)
-    return dfs_list
+#     # delete column contains NaN
+#     for df in dfs_list:
+#         # get column name
+#         column_list = []
+#         for col in df.columns:
+#             column_list.append(col)
+        
+#         # delete column after "Magnitude"
+#         # "Magnitude" in index 5
+#         for i in range(len(column_list)):
+#             if i > 5: del df[column_list[i]]
+    
+#     return files, dfs, dfs_list
+
+
+# # revise z and phase value by internal factor
+# def create_actual_params_columns(dfs_list):
+#     # load data internal factor
+#     file_path="tmp/rc_internal_factor.json"
+#     data = fjson.read_filejson(file_path)
+
+#     for df in dfs_list:         # loop in each dataframe
+#         # create new column
+#         df["Actual Z"] = 0
+#         df["Actual Phase"] = 0
+
+#         for row in range(len(df)):      # loop in each row
+#             # assign actual value
+#             df.loc[row, "Actual Z"] = df.loc[row, "Impedance"] - data["delta_z"][row]
+#             df.loc[row, "Actual Phase"] = df.loc[row, "Phase"] - data["delta_phase"][row]
+#             # print( df.loc[row, "Impedance"], data["delta_z"][row] )
+
+#         # print(df)
+#     return dfs_list
 
 
 def preprocessing_rc_data(files):
@@ -166,28 +185,28 @@ def get_data_mid(dfs_list, iteration):
     return arr_z_mid, arr_phase_mid, dfs_list
 
 
-def prepare_result_folder(data_path):
-    # prepare folder to save the figure
-    saved_dirname = ""
-    for i in range(len(data_path)-1, 0, -1):
-        if data_path[i] == "/":
-            saved_dirname = data_path[i+1:len(data_path)] + "/"
-            break
+# def prepare_result_folder(data_path):
+#     # prepare folder to save the figure
+#     saved_dirname = ""
+#     for i in range(len(data_path)-1, 0, -1):
+#         if data_path[i] == "/":
+#             saved_dirname = data_path[i+1:len(data_path)] + "/"
+#             break
 
-    # create directory
-    path_option = [
-        os.path.join("../media/", saved_dirname),
-        os.path.join("media/", saved_dirname)
-        ]
+#     # create directory
+#     path_option = [
+#         os.path.join("../media/", saved_dirname),
+#         os.path.join("media/", saved_dirname)
+#         ]
     
-    if not( os.path.isdir(path_option[0]) ):    # for notebook environment
-        try: os.mkdir(path_option[0])
-        except: pass
-    if not( os.path.isdir(path_option[1]) ):  # for local python environment
-        try: os.mkdir(path_option[1])
-        except: pass
+#     if not( os.path.isdir(path_option[0]) ):    # for notebook environment
+#         try: os.mkdir(path_option[0])
+#         except: pass
+#     if not( os.path.isdir(path_option[1]) ):  # for local python environment
+#         try: os.mkdir(path_option[1])
+#         except: pass
 
-    return saved_dirname
+#     return saved_dirname
 
 
 def build_graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname):
@@ -240,47 +259,47 @@ def build_df_choosen(dfs_list, iteration):
     return df_choosen
 
 
-def build_single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname):
-    if not(internal_flag):
-        # plot & save figure
-        single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
-                                    x_data="Frequency", y_data="Impedance",
-                                    x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
-                                    suptitle_prefix="SG Impedance")
+# def build_single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname):
+#     if not(internal_flag):
+#         # plot & save figure
+#         single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
+#                                     x_data="Frequency", y_data="Impedance",
+#                                     x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
+#                                     suptitle_prefix="SG Impedance")
 
-        single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
-                                    x_data="Frequency", y_data="Phase",
-                                    x_label="Frequency (Hz)", y_label="Phase (°)",
-                                    suptitle_prefix="SG Phase")
-    elif internal_flag:
-        # plot & save figure
-        single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
-                                    x_data="Frequency", y_data="Actual Z",
-                                    x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
-                                    suptitle_prefix="SG Actual Impedance")
+#         single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
+#                                     x_data="Frequency", y_data="Phase",
+#                                     x_label="Frequency (Hz)", y_label="Phase (°)",
+#                                     suptitle_prefix="SG Phase")
+#     elif internal_flag:
+#         # plot & save figure
+#         single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
+#                                     x_data="Frequency", y_data="Actual Z",
+#                                     x_label="Frequency (Hz)", y_label="Impedance (Ohm)",
+#                                     suptitle_prefix="SG Actual Impedance")
 
-        single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
-                                    x_data="Frequency", y_data="Actual Phase",
-                                    x_label="Frequency (Hz)", y_label="Phase (°)",
-                                    suptitle_prefix="SG Actual Phase")
+#         single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname,
+#                                     x_data="Frequency", y_data="Actual Phase",
+#                                     x_label="Frequency (Hz)", y_label="Phase (°)",
+#                                     suptitle_prefix="SG Actual Phase")
 
 
-def get_z_phase_avg_from_df_choosen(df_choosen):
-    # save mid value from averaged_dataframe
-    # array to store mid value of z from every averaged_dataframe
-    arr_z_avg = []
-    arr_phase_avg = []
+# def get_z_phase_avg_from_df_choosen(df_choosen):
+#     # save mid value from averaged_dataframe
+#     # array to store mid value of z from every averaged_dataframe
+#     arr_z_avg = []
+#     arr_phase_avg = []
 
-    nrows = len(df_choosen[0])
-    for df in df_choosen:
-        if not(internal_flag):
-            arr_z_avg.append( df["Impedance"][nrows//2] )
-            arr_phase_avg.append( df["Phase"][nrows//2] )
-        elif internal_flag:
-            arr_z_avg.append( df["Actual Z"][nrows//2] )
-            arr_phase_avg.append( df["Actual Phase"][nrows//2] )
+#     nrows = len(df_choosen[0])
+#     for df in df_choosen:
+#         if not(internal_flag):
+#             arr_z_avg.append( df["Impedance"][nrows//2] )
+#             arr_phase_avg.append( df["Phase"][nrows//2] )
+#         elif internal_flag:
+#             arr_z_avg.append( df["Actual Z"][nrows//2] )
+#             arr_phase_avg.append( df["Actual Phase"][nrows//2] )
     
-    return arr_z_avg, arr_phase_avg
+#     return arr_z_avg, arr_phase_avg
 
 
 def get_rc_value(arr_z, arr_phase, fmid):
@@ -440,33 +459,33 @@ def update_rc_overview_json(files, iteration, variation_str):
     print("Writing", file_path, "... Done")
 
 
-def build_df_from_file_json(header, data_key, file_path="tmp/rc_variation.json"):
-    data = fjson.read_filejson(file_path)
+# def build_df_from_file_json(header, data_key, file_path="tmp/rc_variation.json"):
+#     data = fjson.read_filejson(file_path)
 
-    keys = list( data.keys() )
-    values = list( data.values() )
+#     keys = list( data.keys() )
+#     values = list( data.values() )
 
-    df = pd.DataFrame(columns=header)
+#     df = pd.DataFrame(columns=header)
 
-    for i in range(len(data)):      # loop as many as num_of_total_variations
-        obj_row = {}    # append this as new row
-        for j in range(len(header)):     # loop as many as num_of_columns
-            if len(obj_row) == 0:
-                obj_row[header[j]] = keys[i]        # for column: "variation"
-            else:
-                num = values[i][data_key[j]]
-                if abs(num) == 0: num = 0
-                elif float(num).is_integer(): num = int(num)
-                elif abs(num) >= 1e-3: num = "{:.3f}".format(num)
-                elif abs(num) < 1e-3: num = "{:.2e}".format(num)
-                obj_row[header[j]] = num
+#     for i in range(len(data)):      # loop as many as num_of_total_variations
+#         obj_row = {}    # append this as new row
+#         for j in range(len(header)):     # loop as many as num_of_columns
+#             if len(obj_row) == 0:
+#                 obj_row[header[j]] = keys[i]        # for column: "variation"
+#             else:
+#                 num = values[i][data_key[j]]
+#                 if abs(num) == 0: num = 0
+#                 elif float(num).is_integer(): num = int(num)
+#                 elif abs(num) >= 1e-3: num = "{:.3f}".format(num)
+#                 elif abs(num) < 1e-3: num = "{:.2e}".format(num)
+#                 obj_row[header[j]] = num
 
-        # add new row to dataframe
-        df.loc[len(df)] = list( obj_row.values() )
-        # print(obj_row, end="\n\n")
-        # print(list(obj_row.keys()), end="\n\n")
+#         # add new row to dataframe
+#         df.loc[len(df)] = list( obj_row.values() )
+#         # print(obj_row, end="\n\n")
+#         # print(list(obj_row.keys()), end="\n\n")
     
-    return df
+#     return df
 
 
 def process_analysis(folder_path_i, variation_data, dfs_list, iteration):
@@ -475,7 +494,7 @@ def process_analysis(folder_path_i, variation_data, dfs_list, iteration):
     dfs_list = create_error_z_column(arr_z_ref, dfs_list, iteration)
 
 
-    saved_dirname = prepare_result_folder(data_path)
+    saved_dirname = proc.prepare_result_folder(data_path)
     
     # plot & save figure
     build_graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname)
@@ -488,11 +507,11 @@ def process_analysis(folder_path_i, variation_data, dfs_list, iteration):
     df_choosen = build_df_choosen(dfs_list, iteration)
 
     # plot & save figure
-    build_single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname)
+    proc.build_single_graph_from_df_choosen(df_choosen, variation_str, folder_path_i, saved_dirname, internal_flag)
 
 
     # store data_avg of parameter: z, phase. Stored to variatioin_rc_json
-    arr_z_avg, arr_phase_avg = get_z_phase_avg_from_df_choosen(df_choosen)
+    arr_z_avg, arr_phase_avg = proc.get_z_phase_avg_from_df_choosen(df_choosen, internal_flag)
 
     arr_r_value, arr_c_value, \
         arr_r_theory_avg, arr_c_theory_avg, \
@@ -520,19 +539,19 @@ def process_analysis(folder_path_i, variation_data, dfs_list, iteration):
 def prepare_df_from_rc_variation_json():
     header = ["variation", "z_ref", "z_avg", "%z", "\u03C6_ref", "\u03C6_avg", "%\u03C6"]
     data_key = ["variation", "z_ref", "z_avg", "z_err", "phase_ref", "phase_avg", "phase_err"]
-    df_z_phase = build_df_from_file_json(header, data_key, file_path="tmp/rc_variation.json")
+    df_z_phase = proc.build_df_from_file_json(header, data_key, file_path="tmp/rc_variation.json")
 
     header = ["variation", "r_ref", "%r_ref", "r_avg", "%r_avg",
                             "c_ref", "%c_ref", "c_avg", "%c_avg"]
     data_key = ["variation", "r_ref", "r_err_theoryref_measurement", "r_avg", "r_err_theoryavg_measurement",
                             "c_ref", "c_err_theoryref_measurement", "c_avg", "c_err_theoryavg_measurement",]
-    df_r_c = build_df_from_file_json(header, data_key, file_path="tmp/rc_variation.json")
+    df_r_c = proc.build_df_from_file_json(header, data_key, file_path="tmp/rc_variation.json")
 
     return df_z_phase, df_r_c
 
 
 # considering internal factor
-def naming_conditioning_for_image_and_markdown():
+def naming_conditioning_for_image_and_markdown(internal_flag):
     # change filename if considering internal factor
     if not(internal_flag):
         fn1 = "TB Impedance Phase"
@@ -548,8 +567,10 @@ def naming_conditioning_for_image_and_markdown():
 
 
 if __name__ == "__main__":
+    internal_flag = proc.choose_internal_flag()
     # first, build rc_internal_factor.json
     if internal_flag: infac.get_internal_factor(data_path)
+
 
     # start
     # replace path_value in folder_path
@@ -566,11 +587,11 @@ if __name__ == "__main__":
         print("\nProcessing %s ..." %folder_name[idx])
 
         # preprocessing
-        files, dfs, dfs_list = prepare_data(folder_path[idx])
+        files, dfs, dfs_list = proc.prepare_data(folder_path[idx])
         if internal_flag:
-            dfs_list = create_actual_params_columns(dfs_list)
+            dfs_list = proc.create_actual_params_columns(dfs_list, file_path="tmp/rc_internal_factor.json")
         variation_str, variation_data = preprocessing_rc_data(files)
-        saved_dirname = prepare_result_folder(data_path)
+        saved_dirname = proc.prepare_result_folder(data_path)
 
         iteration = len(dfs_list) // len(variation_data)
 
@@ -582,7 +603,7 @@ if __name__ == "__main__":
     df_z_phase, df_r_c = prepare_df_from_rc_variation_json()
     
     # change filename if considering internal factor
-    fn1, fn2, fn3 = naming_conditioning_for_image_and_markdown()
+    fn1, fn2, fn3 = naming_conditioning_for_image_and_markdown(internal_flag)
     
     # save them as image
     save_df_as_image(df_z_phase, filename=fn1, saved_dirname=saved_dirname)
