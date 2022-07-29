@@ -15,8 +15,6 @@ folder_path = folder_name.copy()
 fstart = 20e3
 fend = 50e3
 
-internal_flag = True
-
 
 # def choose_internal_flag():
 #     while True:
