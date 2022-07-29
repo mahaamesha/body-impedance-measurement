@@ -565,7 +565,7 @@ def naming_conditioning_for_image_and_markdown(internal_flag):
 if __name__ == "__main__":
     internal_flag = proc.choose_internal_flag()
     # first, build rc_internal_factor.json
-    if internal_flag: infac.get_internal_factor(data_path)
+    if internal_flag: infac.get_internal_factor(data_path, file_path="tmp/rc_internal_factor.json")
 
 
     # start

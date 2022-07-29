@@ -19,18 +19,6 @@ fstart = 20e3
 fend = 50e3
 
 
-def choose_internal_flag():
-    while True:
-        key = ord( input("\nConsidering internal_flag (1/0)? ") )
-        print()
-    
-        if key == ord("1"):
-            internal_flag = True
-            return internal_flag
-        elif key == ord("0"):
-            internal_flag = False
-            return internal_flag
-
 
 def prepare_data(folder_path_i):
     # scan all files
@@ -434,9 +422,9 @@ def naming_conditioning_for_image_and_markdown():
 
 
 if __name__ == "__main__":
-    internal_flag = choose_internal_flag()
+    internal_flag = infac.choose_internal_flag()
     # first, build rc_internal_factor.json
-    if internal_flag: infac.get_internal_factor(data_path)
+    if internal_flag: infac.get_internal_factor(data_path, file_path="tmp/retrieval_internal_factor.json")
 
 
     # start
