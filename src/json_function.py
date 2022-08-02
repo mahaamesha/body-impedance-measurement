@@ -228,9 +228,19 @@ def initialize_training_tmp_files():
         }
     }
 
+    training_model_obj = \
+    {
+        "model_i":{
+            "degree": None,         # polynomial degree n
+            "model_coef": [],       # if ax^2 + bx^1 + cx^0 --> arr = [a, b, c]
+            "r_square": None
+        }
+    }
+
     # initialization json files
     write_obj_to_filejson(file_path="tmp/training_overview.json", obj=training_overview_obj)
     write_obj_to_filejson(file_path="tmp/training_variation.json", obj=training_variation_obj)
+    write_obj_to_filejson(file_path="tmp/training_model.json", obj=training_model_obj)
 
     print("Initialize tmp files ... Done")
 

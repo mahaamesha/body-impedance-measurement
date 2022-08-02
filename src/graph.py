@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
-from json_function import read_filejson
+from json_function import read_filejson, write_obj_to_filejson
 from olah_repetisi_rc import get_arr_rc_str
+import numpy as np
+from sklearn.metrics import r2_score
 
 
 def graph_per_variation(variation_str, iteration, dfs_list, folder_path_i, saved_dirname="",
@@ -312,3 +314,132 @@ def graph_overview_body_composition(saved_dirname, suptitle_text="BC Body Compos
         fig.savefig(save_path)
 
     print("Saving %s ... Done" %(suptitle_text + ".jpg"))
+
+
+# i use this in training_data.py
+# i have variation of R, %Z
+# i want to plot %Z vs R
+def graph_relation_Zerr_and_R(df, folder_path_i, saved_dirname,
+                                x_data="z_ref", y_data="%z",
+                                x_label="Impedance Reference (Ohm)", y_label="Impedance Error (%)",
+                                suptitle_prefix="ZR"):
+
+    # convert column in dataframe from string/object to float
+    df[x_data] = pd.to_numeric(df[x_data], downcast="float")
+    df[y_data] = pd.to_numeric(df[y_data], downcast="float")
+
+    # sort by x_data column
+    df = df.sort_values(by=[x_data], ascending=True)
+    # print(df)
+
+    # plot data
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10,4), constrained_layout=False)
+    
+    df.plot(x=x_data, y=y_data, ax=ax)
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.grid(True)
+
+
+    # add figure title
+    length = len( folder_path_i )-1
+    count = 0
+    slash_position = []     # store position of "\\"
+    suptitle_sufix = ""
+    for i in range( length, 0, -1):
+        if (folder_path_i[i] == "\\" or folder_path_i[i] == "/") and count < 2:
+            slash_position.append(i)
+            count += 1
+            if count == 2:
+                suptitle_sufix = folder_path_i[slash_position[1]+1:slash_position[0]]
+
+    suptitle_text = suptitle_prefix + " - " + suptitle_sufix
+    fig.suptitle(suptitle_text, fontsize="xx-large", weight="bold")
+
+
+    # save figure
+    try:    # for notebook environment
+        save_path = os.path.join("../media/", saved_dirname, suptitle_text + ".jpg")
+        fig.savefig(save_path)
+        plt.show()
+    except: # for local python environment
+        save_path = os.path.join("media/", saved_dirname, suptitle_text + ".jpg")
+        fig.savefig(save_path)
+
+    print("Saving %s ... Done" %suptitle_text)
+
+
+# i use this in training_data.py
+def build_graph_and_model(df, folder_path_i, saved_dirname, degree_arr=[3, 5, 7],
+                x_data="z_avg", y_data="%z",
+                x_label="Impedance Reference (Ohm)", y_label="Impedance Error (%)",
+                suptitle_prefix="MODEL"):
+
+    # figure and axis
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10,4), constrained_layout=False)
+
+    model_obj = {}
+    idx = 0
+
+    x = df[x_data]
+    y = df[y_data]
+    ax.scatter(x, y, color="gray")
+
+    model_obj = {}
+
+    for degree in degree_arr:
+        # build model
+        mymodel = np.poly1d(np.polyfit(x, y, degree))
+        mymodel_coef = list( np.polyfit(x, y, degree) )     # if ax^2 + bx^1 + cx^0 --> arr = [a, b, c]
+        # r-square value
+        r2_score_value = r2_score(y, mymodel(x))
+        # store model to obj
+        model_obj.update( {"model_%s" %(idx+1): {"degree": degree, "model_coef": mymodel_coef, "r_square": r2_score_value}} )
+        
+        myline = np.linspace(min(x), max(x), len(x)*100)
+
+        # plot data
+        r2_score_value = "{:.2f}".format(r2_score_value)
+        ax.plot(myline, mymodel(myline), label="degree %s, R²=%s" %(degree, r2_score_value))
+
+        idx += 1
+    
+    # store model to JSON file
+    # print(model_obj)
+    write_obj_to_filejson(file_path="tmp/training_model.json", obj=model_obj)
+    
+    # set properties
+    ax.legend()
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.grid(True)
+
+    # add figure title
+    length = len( folder_path_i )-1
+    count = 0
+    slash_position = []     # store position of "\\"
+    suptitle_sufix = ""
+    for i in range( length, 0, -1):
+        if (folder_path_i[i] == "\\" or folder_path_i[i] == "/") and count < 2:
+            slash_position.append(i)
+            count += 1
+            if count == 2:
+                suptitle_sufix = folder_path_i[slash_position[1]+1:slash_position[0]]
+
+    suptitle_text = suptitle_prefix + " - " + suptitle_sufix
+    fig.suptitle(suptitle_text, fontsize="xx-large", weight="bold")
+
+
+    # save figure
+    try:    # for notebook environment
+        save_path = os.path.join("../media/", saved_dirname, suptitle_text + ".jpg")
+        fig.savefig(save_path)
+        plt.show()
+    except: # for local python environment
+        save_path = os.path.join("media/", saved_dirname, suptitle_text + ".jpg")
+        fig.savefig(save_path)
+
+    print("Saving %s ... Done" %suptitle_text)
+    
+    return model_obj
