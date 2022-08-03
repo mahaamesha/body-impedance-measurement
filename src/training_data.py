@@ -308,12 +308,13 @@ if __name__ == "__main__":
                                     x_label="Measured Impedance (Ohm)", y_label="Impedance Reference (Ohm)",
                                     suptitle_prefix="MODEL Z")
     
-    # choose best model
+    # choose best model based on r-square value
     best_model_z_coef, best_model_z_r2 = choose_best_model(model_z_obj)
     best_model_err_coef, best_model_err_r2 = choose_best_model(model_err_obj)
     # calculate error value of z_model
     df_z_phase = get_z_model(df_z_phase, best_model_z_coef)
 
+    # compare error value of Z before and after using model function
     barchart_compare(df_z_phase, saved_dirname,
                     x_data="variation", y_data=["%z", "%z_model"],
                     x_label="Variation", y_label="Impedance Error (%)",
