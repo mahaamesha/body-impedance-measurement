@@ -236,6 +236,34 @@ def get_z_model(df, model_coef, var_in="z_avg", var_out="z_model", var_ref="z_re
     return df
 
 
+def report_result(df, best_model_coef, best_model_r2, 
+                    y_data=["%z", "%z_model"],
+                    label=["%z no model", "%z with model"],
+                    model_name="best_model_z"):
+    # to store error range
+    # arr = [(min, max), (min, max), ...]
+    range_err_arr = []
+    for var in y_data:
+        min_val = "{:.2f}".format( min( list(df[var]) ) )
+        max_val = "{:.2f}".format( max( list(df[var]) ) )
+        range_err_arr.append((min_val, max_val))
+    
+    print()
+    print("==== DATA TRAINING RESULT ====")
+    print("model name\t: %s" %model_name)
+    print("degree\t\t: %s" %(len(best_model_coef)-1))
+    # print("model coef\t: %s" %best_model_coef)
+    print("model coef\t: ", end="")
+    for coef in best_model_coef:
+        if coef == best_model_coef[0]: print("%s" %coef)
+        else: print("\t\t  %s" %coef)
+    print("r-square\t: %s" %best_model_r2)
+    for i in range(len(y_data)):
+        print("%s\t: %s - %s " %(label[i], range_err_arr[i][0], range_err_arr[i][1]), end="%\n")
+    print("============ DONE ============")
+
+
+
 
 if __name__ == "__main__":
     folder_data_training_name = detect_folder_data_training(data_path)
@@ -319,5 +347,10 @@ if __name__ == "__main__":
                     x_data="variation", y_data=["%z", "%z_model"],
                     x_label="Variation", y_label="Impedance Error (%)",
                     suptitle_prefix="COMPARE ERR")
+    
+    # print the result
+    report_result(df_z_phase, best_model_z_coef, best_model_z_r2, 
+                y_data=["%z", "%z_model"],
+                model_name="best_model_z")
     
     
