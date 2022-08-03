@@ -319,7 +319,7 @@ def graph_overview_body_composition(saved_dirname, suptitle_text="BC Body Compos
 # i use this in training_data.py
 # i have variation of R, %Z
 # i want to plot %Z vs R
-def graph_relation_Zerr_and_R(df, saved_dirname,
+def graph_relation_Z(df, saved_dirname,
                                 x_data="z_ref", y_data="%z",
                                 x_label="Impedance Reference (Ohm)", y_label="Impedance Error (%)",
                                 suptitle_prefix="ZR"):
@@ -383,8 +383,9 @@ def build_graph_and_model(df, saved_dirname, degree_arr=[3, 5, 7],
         # r-square value
         r2_score_value = r2_score(y, mymodel(x))
         # store model to obj
-        model_obj = {"%s_%s" %((suptitle_prefix.lower()).replace(" ", "_"), idx+1): {"degree": degree, "model_coef": mymodel_coef, "r_square": r2_score_value}}
-        append_obj_to_filejson(file_path="tmp/training_model.json", obj=model_obj)
+        tmp_model_obj = {"%s_%s" %((suptitle_prefix.lower()).replace(" ", "_"), idx+1): {"degree": degree, "model_coef": mymodel_coef, "r_square": r2_score_value}}
+        append_obj_to_filejson(file_path="tmp/training_model.json", obj=tmp_model_obj)
+        model_obj.update(tmp_model_obj)
         
         myline = np.linspace(min(x), max(x), len(x)*100)
 
@@ -396,7 +397,7 @@ def build_graph_and_model(df, saved_dirname, degree_arr=[3, 5, 7],
     
     # store model to JSON file
     # print(model_obj)
-    append_obj_to_filejson(file_path="tmp/training_model.json", obj=model_obj)
+    # append_obj_to_filejson(file_path="tmp/training_model.json", obj=model_obj)
     
     # set properties
     ax.legend()
@@ -420,3 +421,56 @@ def build_graph_and_model(df, saved_dirname, degree_arr=[3, 5, 7],
     print("Saving %s ... Done" %suptitle_text)
     
     return model_obj
+
+
+def barchart_compare(df, saved_dirname,
+                    x_data="variation", y_data=["%z", "%z_model"],
+                    x_label="Variation", y_label="Impedance Error (%)",
+                    suptitle_prefix="COMPARE ERR"):
+    index_arr = list( df[x_data] )
+
+    # i need to build obj for barchart data
+    # {"key1": [], "key2": [], ...}
+    plot_obj = {}
+    for var in y_data:
+        arr = []
+        for n in list(df[var]):
+            arr.append(n)
+                
+        # update to obj
+        plot_obj.update( {var: arr} )
+
+    # build bar chart
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10,5), constrained_layout=True)
+    
+    df_plot = pd.DataFrame(plot_obj, index=index_arr)
+    df_plot.plot(kind="bar", ax=ax)
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.grid(True)
+
+    suptitle_text = suptitle_prefix + " - " + saved_dirname[:-1]
+    fig.suptitle(suptitle_text, fontsize="xx-large", weight="bold")
+
+    # add text
+    str_text = ""
+    idx = 0
+    pading = (plt.axis()[3] - plt.axis()[2]) / 10
+    for var in y_data:
+        min_val = "{:.2f}".format( min( list(df[var]) ) )
+        max_val = "{:.2f}".format( max( list(df[var]) ) )
+        str_text = "%s: (%s - %s)" %(var, min_val, max_val) + "%"
+        ax.text(x=int(plt.axis()[1]*2/3), y=int(plt.axis()[3]*1/2 - pading*idx), s=str_text, fontsize="x-large")
+        idx += 1
+
+    # save figure
+    try:    # for notebook environment
+        save_path = os.path.join("../media/", saved_dirname, suptitle_text + ".jpg")
+        fig.savefig(save_path)
+        plt.show()
+    except: # for local python environment
+        save_path = os.path.join("media/", saved_dirname, suptitle_text + ".jpg")
+        fig.savefig(save_path)
+
+    print("Saving %s ... Done" %suptitle_text)

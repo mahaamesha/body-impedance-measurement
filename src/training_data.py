@@ -186,6 +186,56 @@ def naming_conditioning_for_image_and_markdown(internal_flag):
     return fn1, fn2
 
 
+# model_obj format can be seen at training_model.json or json_function.py
+def choose_best_model(model_obj):
+    r_square_tmp = 0
+    model_coef_tmp = []
+    for val in model_obj.values():
+        if val["r_square"] > r_square_tmp:
+            r_square_tmp = val["r_square"]
+            model_coef_tmp = val["model_coef"]
+    
+    return model_coef_tmp, r_square_tmp
+
+
+def choose_best_model(model_obj):
+    r_square_tmp = 0
+    model_coef_tmp = []
+    for val in model_obj.values():
+        if val["r_square"] > r_square_tmp:
+            r_square_tmp = val["r_square"]
+            model_coef_tmp = val["model_coef"]
+    
+    return model_coef_tmp, r_square_tmp
+
+
+def get_z_model(df, model_coef, var_in="z_avg", var_out="z_model", var_ref="z_ref"):
+    # create new column to store z_actual
+    df[var_out] = 0
+
+    for i in range(len(df)):
+        # get the z_value
+        val_avg = df[var_in][i]
+        val_ref = df[var_ref][i]
+
+        # use the model to get z_actual from z_value
+        val_model = 0      # result for z_avg
+        for j in range(len(model_coef)):
+            coef = model_coef[j]
+            degree = len(model_coef)-1 - j
+
+            val_model += coef * (val_avg ** degree)
+            # print(degree, coef, z_avg, result, sep="\t")
+        
+        # asign z_model to dataframe
+        df.loc[i, var_out] = val_model
+        # asign %z_model to dataframe
+        df.loc[i, str("%" + var_out)] = calculate_error(val_ref, val_model)
+
+    df = df.sort_values(by=[var_in], ascending=True, ignore_index=True)
+    return df
+
+
 
 if __name__ == "__main__":
     folder_data_training_name = detect_folder_data_training(data_path)
@@ -237,24 +287,36 @@ if __name__ == "__main__":
     # tabulate dataframe in markdown file
     create_markdown_table_from_dataframe(df_z_phase, filename=fn1, saved_dirname=saved_dirname)
 
-    
-    graph_relation_Zerr_and_R(df_z_phase, saved_dirname,
+    # make graph
+    graph_relation_Z(df_z_phase, saved_dirname,
                                 x_data="z_avg", y_data="%z",
                                 x_label="Measured Impedance (Ohm)", y_label="Impedance Error (%)",
                                 suptitle_prefix="Zerr vs Zavg")
-    graph_relation_Zerr_and_R(df_z_phase, saved_dirname,
+    graph_relation_Z(df_z_phase, saved_dirname,
                                 x_data="z_avg", y_data="z_ref",
                                 x_label="Measured Impedance (Ohm)", y_label="Impedance Reference (Ohm)",
                                 suptitle_prefix="Zactual vs Zref")
     
-    fjson.clear_filejson(path="tmp/training_model.json")
-    model_obj = build_graph_and_model(df_z_phase, saved_dirname, degree_arr=[3, 5, 7],
+    # build model
+    fjson.write_obj_to_filejson(file_path="tmp/training_model.json", obj={})
+    model_err_obj = build_graph_and_model(df_z_phase, saved_dirname, degree_arr=[3, 5, 7],
                                     x_data="z_avg", y_data="%z",
                                     x_label="Measured Impedance (Ohm)", y_label="Impedance Error (%)",
                                     suptitle_prefix="MODEL ERR")
-    model_obj = build_graph_and_model(df_z_phase, saved_dirname, degree_arr=[1],
+    model_z_obj = build_graph_and_model(df_z_phase, saved_dirname, degree_arr=[1],
                                     x_data="z_avg", y_data="z_ref",
                                     x_label="Measured Impedance (Ohm)", y_label="Impedance Reference (Ohm)",
                                     suptitle_prefix="MODEL Z")
+    
+    # choose best model
+    best_model_z_coef, best_model_z_r2 = choose_best_model(model_z_obj)
+    best_model_err_coef, best_model_err_r2 = choose_best_model(model_err_obj)
+    # calculate error value of z_model
+    df_z_phase = get_z_model(df_z_phase, best_model_z_coef)
+
+    barchart_compare(df_z_phase, saved_dirname,
+                    x_data="variation", y_data=["%z", "%z_model"],
+                    x_label="Variation", y_label="Impedance Error (%)",
+                    suptitle_prefix="COMPARE ERR")
     
     
