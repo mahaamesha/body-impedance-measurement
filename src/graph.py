@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
-from json_function import read_filejson, write_obj_to_filejson
+from json_function import append_obj_to_filejson, clear_filejson, read_filejson, write_obj_to_filejson
 from olah_repetisi_rc import get_arr_rc_str
 import numpy as np
 from sklearn.metrics import r2_score
@@ -319,7 +319,7 @@ def graph_overview_body_composition(saved_dirname, suptitle_text="BC Body Compos
 # i use this in training_data.py
 # i have variation of R, %Z
 # i want to plot %Z vs R
-def graph_relation_Zerr_and_R(df, folder_path_i, saved_dirname,
+def graph_relation_Zerr_and_R(df, saved_dirname,
                                 x_data="z_ref", y_data="%z",
                                 x_label="Impedance Reference (Ohm)", y_label="Impedance Error (%)",
                                 suptitle_prefix="ZR"):
@@ -342,19 +342,7 @@ def graph_relation_Zerr_and_R(df, folder_path_i, saved_dirname,
     ax.grid(True)
 
 
-    # add figure title
-    length = len( folder_path_i )-1
-    count = 0
-    slash_position = []     # store position of "\\"
-    suptitle_sufix = ""
-    for i in range( length, 0, -1):
-        if (folder_path_i[i] == "\\" or folder_path_i[i] == "/") and count < 2:
-            slash_position.append(i)
-            count += 1
-            if count == 2:
-                suptitle_sufix = folder_path_i[slash_position[1]+1:slash_position[0]]
-
-    suptitle_text = suptitle_prefix + " - " + suptitle_sufix
+    suptitle_text = suptitle_prefix + " - " + saved_dirname[:-1]
     fig.suptitle(suptitle_text, fontsize="xx-large", weight="bold")
 
 
@@ -371,7 +359,7 @@ def graph_relation_Zerr_and_R(df, folder_path_i, saved_dirname,
 
 
 # i use this in training_data.py
-def build_graph_and_model(df, folder_path_i, saved_dirname, degree_arr=[3, 5, 7],
+def build_graph_and_model(df, saved_dirname, degree_arr=[3, 5, 7],
                 x_data="z_avg", y_data="%z",
                 x_label="Impedance Reference (Ohm)", y_label="Impedance Error (%)",
                 suptitle_prefix="MODEL"):
@@ -395,7 +383,8 @@ def build_graph_and_model(df, folder_path_i, saved_dirname, degree_arr=[3, 5, 7]
         # r-square value
         r2_score_value = r2_score(y, mymodel(x))
         # store model to obj
-        model_obj.update( {"model_%s" %(idx+1): {"degree": degree, "model_coef": mymodel_coef, "r_square": r2_score_value}} )
+        model_obj = {"%s_%s" %((suptitle_prefix.lower()).replace(" ", "_"), idx+1): {"degree": degree, "model_coef": mymodel_coef, "r_square": r2_score_value}}
+        append_obj_to_filejson(file_path="tmp/training_model.json", obj=model_obj)
         
         myline = np.linspace(min(x), max(x), len(x)*100)
 
@@ -407,7 +396,7 @@ def build_graph_and_model(df, folder_path_i, saved_dirname, degree_arr=[3, 5, 7]
     
     # store model to JSON file
     # print(model_obj)
-    write_obj_to_filejson(file_path="tmp/training_model.json", obj=model_obj)
+    append_obj_to_filejson(file_path="tmp/training_model.json", obj=model_obj)
     
     # set properties
     ax.legend()
@@ -415,19 +404,7 @@ def build_graph_and_model(df, folder_path_i, saved_dirname, degree_arr=[3, 5, 7]
     ax.set_ylabel(y_label)
     ax.grid(True)
 
-    # add figure title
-    length = len( folder_path_i )-1
-    count = 0
-    slash_position = []     # store position of "\\"
-    suptitle_sufix = ""
-    for i in range( length, 0, -1):
-        if (folder_path_i[i] == "\\" or folder_path_i[i] == "/") and count < 2:
-            slash_position.append(i)
-            count += 1
-            if count == 2:
-                suptitle_sufix = folder_path_i[slash_position[1]+1:slash_position[0]]
-
-    suptitle_text = suptitle_prefix + " - " + suptitle_sufix
+    suptitle_text = suptitle_prefix + " - " + saved_dirname[:-1]
     fig.suptitle(suptitle_text, fontsize="xx-large", weight="bold")
 
 

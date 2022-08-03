@@ -173,7 +173,6 @@ def process_analysis(folder_path_i, variation_str, dfs_list, iteration):
                                     arr_z_avg, arr_phase_avg,
                                     arr_z_err, arr_phase_err)
 
-
 # considering internal factor
 def naming_conditioning_for_image_and_markdown(internal_flag):
     # change filename if considering internal factor
@@ -215,7 +214,7 @@ if __name__ == "__main__":
         # preprocessing
         files, dfs, dfs_list = proc.prepare_data(folder_path[idx])
         if internal_flag:
-            dfs_list = proc.create_actual_params_columns(dfs_list, file_path="tmp/rc_internal_factor.json")
+            dfs_list = proc.create_actual_params_columns(dfs_list, file_path="tmp/training_internal_factor.json")
         variation_str, variation_data = preprocessing_data_training(files)
         saved_dirname = proc.prepare_result_folder(data_path)
 
@@ -237,3 +236,25 @@ if __name__ == "__main__":
     # save_df_as_image(df_z_phase, filename=fn1, saved_dirname=saved_dirname)
     # tabulate dataframe in markdown file
     create_markdown_table_from_dataframe(df_z_phase, filename=fn1, saved_dirname=saved_dirname)
+
+    
+    graph_relation_Zerr_and_R(df_z_phase, saved_dirname,
+                                x_data="z_avg", y_data="%z",
+                                x_label="Measured Impedance (Ohm)", y_label="Impedance Error (%)",
+                                suptitle_prefix="Zerr vs Zavg")
+    graph_relation_Zerr_and_R(df_z_phase, saved_dirname,
+                                x_data="z_avg", y_data="z_ref",
+                                x_label="Measured Impedance (Ohm)", y_label="Impedance Reference (Ohm)",
+                                suptitle_prefix="Zactual vs Zref")
+    
+    fjson.clear_filejson(path="tmp/training_model.json")
+    model_obj = build_graph_and_model(df_z_phase, saved_dirname, degree_arr=[3, 5, 7],
+                                    x_data="z_avg", y_data="%z",
+                                    x_label="Measured Impedance (Ohm)", y_label="Impedance Error (%)",
+                                    suptitle_prefix="MODEL ERR")
+    model_obj = build_graph_and_model(df_z_phase, saved_dirname, degree_arr=[1],
+                                    x_data="z_avg", y_data="z_ref",
+                                    x_label="Measured Impedance (Ohm)", y_label="Impedance Reference (Ohm)",
+                                    suptitle_prefix="MODEL Z")
+    
+    
