@@ -10,12 +10,13 @@
         50000.0
     ],
     "variation_str": [
-        "aldian g1",
-        "aldian g2",
-        "aldian g3",
-        "aldian g4",
-        "aldian t1"
+        "aldian p1",
+        "aldian p2",
+        "aldian p3",
+        "aldian p4",
+        "aldian p5",
+        "aldian p6"
     ],
-    "num_variation": 5,
+    "num_variation": 6,
     "num_iteration": 5
 }

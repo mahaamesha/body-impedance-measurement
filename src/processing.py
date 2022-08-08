@@ -11,7 +11,8 @@ import internal_factor as infac
 
 
 # change this as needed
-data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/pengukuran tangan modul"
+# data_path = "E:/_TUGAS/_ITBOneDrive/OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/pengukuran tangan modul"
+data_path = "E:/_TUGAS/_ITBOneDrive\OneDrive - Institut Teknologi Bandung/_Kuliah/_sem7/7_kerja praktek/data/electrode wet without 74hc4051"
 folder_name = ["id001 dwi/", "id002 angga/", "id003 avima/", "id004 aldian/"]
 folder_path = folder_name.copy()
 
@@ -393,7 +394,7 @@ def process_analysis(folder_path_i, variation_str, dfs_list, iteration):
 
     # calculate r,c from z,phase
     fmid = find_fmid_from_data_retrieval(dfs_list)
-    arr_r, arr_c = get_rc_value(arr_z_avg, arr_phase_avg, fmid)  
+    arr_r, arr_c = get_rc_value(arr_z_avg, arr_phase_avg, fmid)
 
     # update json file data
     update_overview_json(folder_name, fstart, fend, files, iteration, variation_str, 
