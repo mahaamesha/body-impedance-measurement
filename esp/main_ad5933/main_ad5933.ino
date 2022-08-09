@@ -47,10 +47,10 @@ struct struct_data {
 
 // store data of body composition
 struct struct_body_composition {
-	int weight;
-	int height;
-	int age;
-	bool gender;
+	int weight = 57;
+	int height = 169;
+	int age = 21;
+	int gender = 1;
 
 	float impedance;
 	float ffm;
@@ -64,19 +64,19 @@ struct struct_body_composition {
 
 // define function here
 float calculate_phase(int real, int imag);
-void store_sampling(int freq, float impedance, float phase, struct_data data, int idx);
-void consider_internal_factor(struct_data data, struct_internal_factor internal, int idx);
+void store_sampling(int freq, float impedance, float phase, struct_data *data, int idx);
+void consider_internal_factor(struct_data *data, struct_internal_factor *internal, int idx);
 float get_data_mid(float arr[], int length);
 float get_data_median(float arr[], int length);
 float calculate_r(float z, float phase);
 float calculate_c(float z, float phase, float f);
-float calculate_ffm(int w, int h, float z, int y, bool s);
+float calculate_ffm(int w, int h, float z, int y, int s);
 float calculate_fm(int w, float ffm);
 float calculate_tbw(float ffm, float percentage);
-float calculate_bc_kg(int w, int h, float z, int y, bool s);
+float calculate_bc_kg(int w, int h, float z, int y, int s);
 float calculate_percentage(float ref, float value);
 float calculate_bc_percentage(float w, float ffm, float fm, float tbw);
-void process_analysis(struct_data data, struct_body_composition body);
+void process_analysis(struct_data *data, struct_body_composition *body);
 
 
 void setup() {
@@ -135,18 +135,18 @@ float calculate_phase(int real, int imag) {
 
 
 // i store data to struct_sampling to get minimal parameter in other function
-void store_sampling(int freq, float impedance, float phase, struct_data data, int idx) {
-	data.freq[idx] = freq;
-	data.impedance[idx] = impedance;
-	data.phase[idx] = phase;
+void store_sampling(int freq, float impedance, float phase, struct_data *data, int idx) {
+	(*data).freq[idx] = freq;
+	(*data).impedance[idx] = impedance;
+	(*data).phase[idx] = phase;
 }
 
 
 // consider internal factor by substract the value of data
 // similar to creata_actual_params_columns() in processing.py
-void consider_internal_factor(struct_data data, struct_internal_factor internal, int idx) {
-	data.actual_impedance[idx] = data.impedance[idx] - internal.delta_z[idx];
-	data.actual_phase[idx] = data.phase[idx] - internal.delta_phase[idx];
+void consider_internal_factor(struct_data *data, struct_internal_factor *internal, int idx) {
+	(*data).actual_impedance[idx] = (*data).impedance[idx] - (*internal).delta_z[idx];
+	(*data).actual_phase[idx] = (*data).phase[idx] - (*internal).delta_phase[idx];
 }
 
 
@@ -194,7 +194,7 @@ float calculate_c(float z, float phase, float f) {
 
 
 // to calculate fat-free mass
-float calculate_ffm(int w, int h, float z, int y, bool s) {
+float calculate_ffm(int w, int h, float z, int y, int s) {
 	// Predicting body composition using foot-to-foot bioelectrical impedance analysis in healthy Asian individuals
     // https://www.researchgate.net/publication/277088052_Predicting_body_composition_using_foot-to-foot_bioelectrical_impedance_analysis_in_healthy_Asian_individuals#:~:text=13.055%20%2B%200.204%20w,y%20%2B%208.125%20S
     // w : weight (kg)
@@ -223,59 +223,39 @@ float calculate_tbw(float ffm, float percentage=0.73) {
 }
 
 
-// to calculate body composition
-float calculate_bc_kg(int w, int h, float z, int y, bool s) {
-	float ffm_kg = calculate_ffm(w, h, z, y, s);
-	float fm_kg = calculate_fm(w, ffm_kg);
-    float tbw_kg = calculate_tbw(ffm_kg);
-
-	return ffm_kg, fm_kg, tbw_kg;
-}
-
-
 float calculate_percentage(float ref, float value) {
     float percentage = value / ref * 100;
     return percentage;
 }
 
 
-// calculate BC percentage
-float calculate_bc_percentage(float w, float ffm, float fm, float tbw) {
-	//using model 3-components (3C): fm, ffm, tbw
-    float ffm_percentage = calculate_percentage(w, ffm);
-    float fm_percentage = calculate_percentage(w, fm);
-    float tbw_percentage = calculate_percentage(w, tbw);
-
-    return ffm_percentage, fm_percentage, tbw_percentage;
-}
-
-
-void process_analysis(struct_data data, struct_body_composition body) {
+void process_analysis(struct_data *data, struct_body_composition *body) {
 	// get median data
-	data.f_mid = get_data_median(data.freq, NUM_INCR);
-	data.z_mid = get_data_median(data.actual_impedance, NUM_INCR);
-	data.phase_mid = get_data_median(data.actual_phase, NUM_INCR);
+	(*data).f_mid = get_data_median((*data).freq, NUM_INCR);
+	(*data).z_mid = get_data_median((*data).actual_impedance, NUM_INCR);
+	(*data).phase_mid = get_data_median((*data).actual_phase, NUM_INCR);
 	
 	// calculate r and c value
-	data.r_mid = calculate_r(data.z_mid, data.phase_mid);
-	data.c_mid = calculate_c(data.z_mid, data.phase_mid, data.f_mid);
+	(*data).r_mid = calculate_r((*data).z_mid, (*data).phase_mid);
+	(*data).c_mid = calculate_c((*data).z_mid, (*data).phase_mid, (*data).f_mid);
 
 	// update impedance value from data z_mid
-	body.impedance = data.z_mid;
+	(*body).impedance = (*data).z_mid;
 
-	// calculate body composition in kg unit
-	int w = body.weight;
-	int h = body.height;
-	int y = body.age;
-	bool s = body.gender;
-	float z = body.impedance;
-	body.ffm, body.fm, body.tbw = calculate_bc_kg(w, h, z, y, s);
+	// calculate body composition in kg & percentage unit
+	int w = (*body).weight;
+	int h = (*body).height;
+	int y = (*body).age;
+	int s = (*body).gender;
+	float z = (*body).impedance;
+	
+	(*body).ffm = calculate_ffm(w, h, z, y, s);
+	(*body).fm = calculate_fm(w, (*body).ffm);
+    (*body).tbw = calculate_tbw((*body).ffm);
 
-	// calculate body composition in percentage unit
-	float ffm = body.ffm;
-	float fm = body.fm;
-	float tbw = body.tbw;
-	body.ffm_percentage, body.fm_percentage, body.tbw_percentage = calculate_bc_percentage(w, ffm, fm, tbw);
+	(*body).ffm_percentage = calculate_percentage(w, (*body).ffm);
+    (*body).fm_percentage = calculate_percentage(w, (*body).fm);
+    (*body).tbw_percentage = calculate_percentage(w, (*body).tbw);
 }
 
 
@@ -342,9 +322,9 @@ void frequency_sweep_real_time() {
 		float phase = calculate_phase(real, imag);
 		
 		// store to struct
-		store_sampling(cfreq, impedance, phase, data_retrieval, i);
+		store_sampling(cfreq, impedance, phase, &data_retrieval, i);
 		// get actual value, considering internal factor
-		// consider_internal_factor(data_retrieval, internal_factor, i);
+		consider_internal_factor(&data_retrieval, &internal_factor, i);
 
 		// Print out the frequency data
 		Serial.print(cfreq);
@@ -369,11 +349,26 @@ void frequency_sweep_real_time() {
 
 	
 	// process analysis here
-	process_analysis(data_retrieval, body_composition);
+	process_analysis(&data_retrieval, &body_composition);
 
 	cout << "f_mid :" << data_retrieval.f_mid << "\n";
 	cout << "z_mid :" << data_retrieval.z_mid << "\n";
-	cout << "ffm_p :" << body_composition.ffm_percentage << "\n";
+	cout << "phase_mid :" << data_retrieval.phase_mid << "\n";
+	cout << "r_mid :" << data_retrieval.r_mid << "\n";
+	cout << "c_mid :" << data_retrieval.c_mid << "\n";
+
+	cout << "w :" << body_composition.weight << "\n";
+	cout << "h :" << body_composition.height << "\n";
+	cout << "y :" << body_composition.age << "\n";
+	cout << "s :" << body_composition.gender << "\n";
+	cout << "z :" << body_composition.impedance << "\n";
+	cout << "ffm :" << body_composition.ffm << "\n";
+	cout << "ffm :" << body_composition.ffm_percentage << "\n";
+	cout << "fm  :" << body_composition.fm << "\n";
+	cout << "fm  :" << body_composition.fm_percentage << "\n";
+	cout << "tbw :" << body_composition.tbw << "\n";
+	cout << "tbw :" << body_composition.tbw_percentage << "\n";
+
 	delay(3000);
 
 	// Set AD5933 power mode to standby when finished
