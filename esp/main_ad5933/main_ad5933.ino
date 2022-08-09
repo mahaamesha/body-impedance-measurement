@@ -26,18 +26,10 @@ struct struct_internal_factor {
 } internal_factor;
 
 
-// store data in index i
-struct struct_sampling {
-	int freq;
-	float impedance;
-	float phase;
-} data_sampling;
-
-
 // store data from measurement in array. for each parameter
 struct struct_data {
 	// data from measurement
-	int freq[NUM_INCR];
+	float freq[NUM_INCR];
 	float impedance[NUM_INCR];
 	float phase[NUM_INCR];
 	
@@ -45,12 +37,11 @@ struct struct_data {
 	float actual_phase[NUM_INCR];
 
 	// data from statistics
+	float f_mid;
 	float z_mid;
-	float z_avg;
 	float phase_mid;
-	float phase_avg;
-	float r_avg;
-	float c_avg;
+	float r_mid;
+	float c_mid;
 } data_retrieval;
 
 
@@ -73,8 +64,10 @@ struct struct_body_composition {
 
 // define function here
 float calculate_phase(int real, int imag);
-float get_data_mid(int arr[], int length);
-float get_data_median(int arr[], int length);
+void store_sampling(int freq, float impedance, float phase, struct_data data, int idx);
+void consider_internal_factor(struct_data data, struct_internal_factor internal, int idx);
+float get_data_mid(float arr[], int length);
+float get_data_median(float arr[], int length);
 float calculate_r(float z, float phase);
 float calculate_c(float z, float phase, float f);
 float calculate_ffm(int w, int h, float z, int y, bool s);
@@ -83,6 +76,7 @@ float calculate_tbw(float ffm, float percentage);
 float calculate_bc_kg(int w, int h, float z, int y, bool s);
 float calculate_percentage(float ref, float value);
 float calculate_bc_percentage(float w, float ffm, float fm, float tbw);
+void process_analysis(struct_data data, struct_body_composition body);
 
 
 void setup() {
@@ -113,10 +107,10 @@ void setup() {
 
 void loop() {
 	// Easy to use method for frequency sweep
-	// frequencySweepEasy();
+	// frequency_sweep_easy();
 
 	// Complex but more robust method for frequency sweep
-	frequencySweepRaw();
+	frequency_sweep_real_time();
 
 	// process analysis
 	// internal factor and model need to stored when calibration
@@ -140,8 +134,24 @@ float calculate_phase(int real, int imag) {
 }
 
 
+// i store data to struct_sampling to get minimal parameter in other function
+void store_sampling(int freq, float impedance, float phase, struct_data data, int idx) {
+	data.freq[idx] = freq;
+	data.impedance[idx] = impedance;
+	data.phase[idx] = phase;
+}
+
+
+// consider internal factor by substract the value of data
+// similar to creata_actual_params_columns() in processing.py
+void consider_internal_factor(struct_data data, struct_internal_factor internal, int idx) {
+	data.actual_impedance[idx] = data.impedance[idx] - internal.delta_z[idx];
+	data.actual_phase[idx] = data.phase[idx] - internal.delta_phase[idx];
+}
+
+
 // use this to get data in fmid
-float get_data_mid(int arr[], int length) {
+float get_data_mid(float arr[], int length) {
 	int idx = floor((length-1)/2);
 	float mid = arr[idx];
 
@@ -150,7 +160,7 @@ float get_data_mid(int arr[], int length) {
 
 
 // use this to get median data
-float get_data_median(int arr[], int length) {
+float get_data_median(float arr[], int length) {
     // first we sort the array
     sort(arr, arr + length);		// from #include <bits/stdc++.h>
  
@@ -240,10 +250,39 @@ float calculate_bc_percentage(float w, float ffm, float fm, float tbw) {
 }
 
 
+void process_analysis(struct_data data, struct_body_composition body) {
+	// get median data
+	data.f_mid = get_data_median(data.freq, NUM_INCR);
+	data.z_mid = get_data_median(data.actual_impedance, NUM_INCR);
+	data.phase_mid = get_data_median(data.actual_phase, NUM_INCR);
+	
+	// calculate r and c value
+	data.r_mid = calculate_r(data.z_mid, data.phase_mid);
+	data.c_mid = calculate_c(data.z_mid, data.phase_mid, data.f_mid);
+
+	// update impedance value from data z_mid
+	body.impedance = data.z_mid;
+
+	// calculate body composition in kg unit
+	int w = body.weight;
+	int h = body.height;
+	int y = body.age;
+	bool s = body.gender;
+	float z = body.impedance;
+	body.ffm, body.fm, body.tbw = calculate_bc_kg(w, h, z, y, s);
+
+	// calculate body composition in percentage unit
+	float ffm = body.ffm;
+	float fm = body.fm;
+	float tbw = body.tbw;
+	body.ffm_percentage, body.fm_percentage, body.tbw_percentage = calculate_bc_percentage(w, ffm, fm, tbw);
+}
+
+
 // Easy way to do a frequency sweep. Does an entire frequency sweep at once and
 // stores the data into arrays for processing afterwards. This is easy-to-use,
 // but doesn't allow you to process data in real time.
-void frequencySweepEasy() {
+void frequency_sweep_easy() {
 	// Create arrays to hold the data
 	int real[NUM_INCR+1], imag[NUM_INCR+1];
 
@@ -278,7 +317,7 @@ void frequencySweepEasy() {
 
 // Removes the frequencySweep abstraction from above. This saves memory and
 // allows for data to be processed in real time. However, it's more complex.
-void frequencySweepRaw() {
+void frequency_sweep_real_time() {
 	// Create variables to hold the impedance data and track frequency
 	int real, imag, i = 0, cfreq = START_FREQ;
 
@@ -303,10 +342,9 @@ void frequencySweepRaw() {
 		float phase = calculate_phase(real, imag);
 		
 		// store to struct
-		data_sampling.freq = cfreq;
-		data_sampling.impedance = impedance;
-		data_sampling.phase = phase;
-
+		store_sampling(cfreq, impedance, phase, data_retrieval, i);
+		// get actual value, considering internal factor
+		// consider_internal_factor(data_retrieval, internal_factor, i);
 
 		// Print out the frequency data
 		Serial.print(cfreq);
@@ -329,12 +367,16 @@ void frequencySweepRaw() {
 
 	Serial.println("Frequency sweep complete!");
 
+	
+	// process analysis here
+	process_analysis(data_retrieval, body_composition);
+
+	cout << "f_mid :" << data_retrieval.f_mid << "\n";
+	cout << "z_mid :" << data_retrieval.z_mid << "\n";
+	cout << "ffm_p :" << body_composition.ffm_percentage << "\n";
+	delay(3000);
+
 	// Set AD5933 power mode to standby when finished
 	if (!AD5933::setPowerMode(POWER_STANDBY))
 		Serial.println("Could not set to standby...");
-}
-
-
-void preprocessing(struct_sampling sampling, struct_data data) {
-
 }
