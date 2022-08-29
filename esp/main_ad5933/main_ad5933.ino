@@ -18,6 +18,8 @@ using namespace std;
 double gain[NUM_INCR+1];	// should double
 int phase[NUM_INCR+1];
 
+bool cal_flag = 1;	// testing, set it to TRUE
+
 // define struct here
 // struct to store internal factor
 struct struct_internal_factor {
@@ -105,7 +107,8 @@ void setup() {
 	if (AD5933::calibrate(gain, phase, REF_RESIST, NUM_INCR+1)) {
 		// in calibration process, i need to store first sweep data using RCAL
 		// i want to store it to struct internal_factor
-		first_sweep_to_store_internal_factor();
+		// first_sweep_to_store_internal_factor();
+		frequency_sweep_real_time();
 		Serial.println("Calibrated!");
 	}
 	else {
@@ -348,6 +351,9 @@ void frequency_sweep_real_time() {
 			Serial.println("Could not initialize frequency sweep...");
 		}
 
+	// print what next to do
+	if (cal_flag == 1) Serial.print("Sweep frequency & store internal factor ... ");
+	else Serial.print("Sweep frequency ... ");
 	// Perform the actual sweep
 	while ((AD5933::readStatusRegister() & STATUS_SWEEP_DONE) != STATUS_SWEEP_DONE) {
 		// Get the frequency data for this frequency point
@@ -360,78 +366,37 @@ void frequency_sweep_real_time() {
 		float impedance = 1/(magnitude*gain[i]);
 		float phase = calculate_phase(real, imag);
 		
-		// store to struct
-		store_sampling(cfreq, impedance, phase, &data_retrieval, i);
-		// get actual value, considering internal factor
-		consider_internal_factor(&data_retrieval, &internal_factor, i);
+		// if in calibration process
+		if (cal_flag == 1) {
+			// in calibration process, i need to store delta_z & delta_phase
+			store_internal_factor(impedance, phase, &internal_factor, i);
 
-		// Print out the frequency data
-		Serial.print(cfreq);
-		Serial.print(", ");
-		Serial.print(impedance);
-		Serial.print(", ");
-		Serial.print(phase);
-		Serial.print(", ");
-		Serial.print(real);
-		Serial.print(", ");
-		Serial.print(imag);
-		Serial.print(", ");
-		Serial.println(magnitude);
-
-		// Increment the frequency
-		i++;
-		cfreq += FREQ_INCR;
-		AD5933::setControlMode(CTRL_INCREMENT_FREQ);
-	}
-
-	Serial.println("Frequency sweep complete!");
-
-	
-	// process analysis here
-	process_analysis(&data_retrieval, &body_composition);
-	debug_print();
-
-
-	// Set AD5933 power mode to standby when finished
-	if (!AD5933::setPowerMode(POWER_STANDBY))
-		Serial.println("Could not set to standby...");
-}
-
-
-void first_sweep_to_store_internal_factor() {
-	// Create variables to hold the impedance data and track frequency
-	int real, imag, i = 0, cfreq = START_FREQ;
-
-	// Initialize the frequency sweep
-	if (!(AD5933::setPowerMode(POWER_STANDBY) &&          // place in standby
-		AD5933::setControlMode(CTRL_INIT_START_FREQ) && // init start freq
-		AD5933::setControlMode(CTRL_START_FREQ_SWEEP))) // begin frequency sweep
-		{
-			Serial.println("Could not initialize frequency sweep...");
+			// Print out the frequency data
+			Serial.print(cfreq);
+			Serial.print(", ");
+			Serial.print(internal_factor.delta_z[i]);
+			Serial.print(", ");
+			Serial.println(internal_factor.delta_phase[i]);
 		}
+		else {		// if in measurement mode
+			// store to struct
+			store_sampling(cfreq, impedance, phase, &data_retrieval, i);
+			// get actual value, considering internal factor
+			consider_internal_factor(&data_retrieval, &internal_factor, i);
 
-	// Perform the actual sweep
-	Serial.print("Sweep frequency & store internal factor ... ");
-	while ((AD5933::readStatusRegister() & STATUS_SWEEP_DONE) != STATUS_SWEEP_DONE) {
-		// Get the frequency data for this frequency point
-		if (!AD5933::getComplexData(&real, &imag)) {
-			Serial.println("Could not get raw frequency data...");
+			// Print out the frequency data
+			Serial.print(cfreq);
+			Serial.print(", ");
+			Serial.print(impedance);
+			Serial.print(", ");
+			Serial.print(phase);
+			Serial.print(", ");
+			Serial.print(real);
+			Serial.print(", ");
+			Serial.print(imag);
+			Serial.print(", ");
+			Serial.println(magnitude);
 		}
-
-		// Compute impedance
-		float magnitude = sqrt(pow(real, 2) + pow(imag, 2));
-		float impedance = 1/(magnitude*gain[i]);
-		float phase = calculate_phase(real, imag);
-		
-		// in calibration process, i need to store delta_z & delta_phase
-		store_internal_factor(impedance, phase, &internal_factor, i);
-
-		// Print out the frequency data
-		Serial.print(cfreq);
-		Serial.print(", ");
-		Serial.print(internal_factor.delta_z[i]);
-		Serial.print(", ");
-		Serial.println(internal_factor.delta_phase[i]);
 
 		// Increment the frequency
 		i++;
@@ -439,6 +404,13 @@ void first_sweep_to_store_internal_factor() {
 		AD5933::setControlMode(CTRL_INCREMENT_FREQ);
 	}
 	Serial.println("Done");
+
+	
+	// process analysis here
+	if (cal_flag == 0) {
+		process_analysis(&data_retrieval, &body_composition);
+		debug_print();
+	}
 
 
 	// Set AD5933 power mode to standby when finished
