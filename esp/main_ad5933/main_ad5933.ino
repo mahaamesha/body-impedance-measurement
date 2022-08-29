@@ -21,6 +21,8 @@ int phase[NUM_INCR+1];
 // define struct here
 // struct to store internal factor
 struct struct_internal_factor {
+	int z_cal = REF_RESIST;
+	int phase_cal = 0;
 	float delta_z[NUM_INCR];
 	float delta_phase[NUM_INCR];
 } internal_factor;
@@ -73,10 +75,11 @@ float calculate_c(float z, float phase, float f);
 float calculate_ffm(int w, int h, float z, int y, int s);
 float calculate_fm(int w, float ffm);
 float calculate_tbw(float ffm, float percentage);
-float calculate_bc_kg(int w, int h, float z, int y, int s);
 float calculate_percentage(float ref, float value);
-float calculate_bc_percentage(float w, float ffm, float fm, float tbw);
 void process_analysis(struct_data *data, struct_body_composition *body);
+void debug_print();
+void frequency_sweep_easy();
+void frequency_sweep_real_time();
 
 
 void setup() {
@@ -95,14 +98,19 @@ void setup() {
 		AD5933::setNumberIncrements(NUM_INCR) &&
 		AD5933::setPGAGain(PGA_GAIN_X1))) {
 			Serial.println("FAILED in initialization!");
-			while (true);
+			while (true);	// if its failed, infinite loop
 		}
 
 	// Perform calibration sweep
-	if (AD5933::calibrate(gain, phase, REF_RESIST, NUM_INCR+1))
+	if (AD5933::calibrate(gain, phase, REF_RESIST, NUM_INCR+1)) {
+		// in calibration process, i need to store first sweep data using RCAL
+		// i want to store it to struct internal_factor
+		first_sweep_to_store_internal_factor();
 		Serial.println("Calibrated!");
-	else
+	}
+	else {
 		Serial.println("Calibration failed...");
+	}
 }
 
 void loop() {
@@ -139,6 +147,14 @@ void store_sampling(int freq, float impedance, float phase, struct_data *data, i
 	(*data).freq[idx] = freq;
 	(*data).impedance[idx] = impedance;
 	(*data).phase[idx] = phase;
+}
+
+
+// in calibration process, z_cal and phase_cal stored in struct_data first.
+// so, i need to calculate 
+void store_internal_factor(float impedance, float phase, struct_internal_factor *internal, int idx) {
+	(*internal).delta_z[idx] = impedance - (*internal).z_cal;
+	(*internal).delta_phase[idx] = phase - (*internal).phase_cal;
 }
 
 
@@ -259,6 +275,29 @@ void process_analysis(struct_data *data, struct_body_composition *body) {
 }
 
 
+void debug_print() {
+	cout << "f_mid (hz)        :" << data_retrieval.f_mid << "\n";
+	cout << "z_mid (ohm)       :" << data_retrieval.z_mid << "\n";
+	cout << "phase_mid (degree):" << data_retrieval.phase_mid << "\n";
+	cout << "r_mid (ohm)       :" << data_retrieval.r_mid << "\n";
+	cout << "c_mid (farad)     :" << data_retrieval.c_mid << "\n";
+
+	cout << "w (kg)  :" << body_composition.weight << "\n";
+	cout << "h (cm)  :" << body_composition.height << "\n";
+	cout << "y (yo)  :" << body_composition.age << "\n";
+	cout << "s (1/0) :" << body_composition.gender << "\n";
+	cout << "z (ohm) :" << body_composition.impedance << "\n";
+	cout << "ffm (kg):" << body_composition.ffm << "\n";
+	cout << "ffm (%) :" << body_composition.ffm_percentage << "\n";
+	cout << "fm (kg) :" << body_composition.fm << "\n";
+	cout << "fm (%)  :" << body_composition.fm_percentage << "\n";
+	cout << "tbw (kg):" << body_composition.tbw << "\n";
+	cout << "tbw (%) :" << body_composition.tbw_percentage << "\n";
+
+	delay(3000);
+}
+
+
 // Easy way to do a frequency sweep. Does an entire frequency sweep at once and
 // stores the data into arrays for processing afterwards. This is easy-to-use,
 // but doesn't allow you to process data in real time.
@@ -350,26 +389,57 @@ void frequency_sweep_real_time() {
 	
 	// process analysis here
 	process_analysis(&data_retrieval, &body_composition);
+	debug_print();
 
-	cout << "f_mid :" << data_retrieval.f_mid << "\n";
-	cout << "z_mid :" << data_retrieval.z_mid << "\n";
-	cout << "phase_mid :" << data_retrieval.phase_mid << "\n";
-	cout << "r_mid :" << data_retrieval.r_mid << "\n";
-	cout << "c_mid :" << data_retrieval.c_mid << "\n";
 
-	cout << "w :" << body_composition.weight << "\n";
-	cout << "h :" << body_composition.height << "\n";
-	cout << "y :" << body_composition.age << "\n";
-	cout << "s :" << body_composition.gender << "\n";
-	cout << "z :" << body_composition.impedance << "\n";
-	cout << "ffm :" << body_composition.ffm << "\n";
-	cout << "ffm :" << body_composition.ffm_percentage << "\n";
-	cout << "fm  :" << body_composition.fm << "\n";
-	cout << "fm  :" << body_composition.fm_percentage << "\n";
-	cout << "tbw :" << body_composition.tbw << "\n";
-	cout << "tbw :" << body_composition.tbw_percentage << "\n";
+	// Set AD5933 power mode to standby when finished
+	if (!AD5933::setPowerMode(POWER_STANDBY))
+		Serial.println("Could not set to standby...");
+}
 
-	delay(3000);
+
+void first_sweep_to_store_internal_factor() {
+	// Create variables to hold the impedance data and track frequency
+	int real, imag, i = 0, cfreq = START_FREQ;
+
+	// Initialize the frequency sweep
+	if (!(AD5933::setPowerMode(POWER_STANDBY) &&          // place in standby
+		AD5933::setControlMode(CTRL_INIT_START_FREQ) && // init start freq
+		AD5933::setControlMode(CTRL_START_FREQ_SWEEP))) // begin frequency sweep
+		{
+			Serial.println("Could not initialize frequency sweep...");
+		}
+
+	// Perform the actual sweep
+	Serial.print("Sweep frequency & store internal factor ... ");
+	while ((AD5933::readStatusRegister() & STATUS_SWEEP_DONE) != STATUS_SWEEP_DONE) {
+		// Get the frequency data for this frequency point
+		if (!AD5933::getComplexData(&real, &imag)) {
+			Serial.println("Could not get raw frequency data...");
+		}
+
+		// Compute impedance
+		float magnitude = sqrt(pow(real, 2) + pow(imag, 2));
+		float impedance = 1/(magnitude*gain[i]);
+		float phase = calculate_phase(real, imag);
+		
+		// in calibration process, i need to store delta_z & delta_phase
+		store_internal_factor(impedance, phase, &internal_factor, i);
+
+		// Print out the frequency data
+		Serial.print(cfreq);
+		Serial.print(", ");
+		Serial.print(internal_factor.delta_z[i]);
+		Serial.print(", ");
+		Serial.println(internal_factor.delta_phase[i]);
+
+		// Increment the frequency
+		i++;
+		cfreq += FREQ_INCR;
+		AD5933::setControlMode(CTRL_INCREMENT_FREQ);
+	}
+	Serial.println("Done");
+
 
 	// Set AD5933 power mode to standby when finished
 	if (!AD5933::setPowerMode(POWER_STANDBY))
