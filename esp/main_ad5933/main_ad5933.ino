@@ -19,6 +19,11 @@ double gain[NUM_INCR+1];	// should double
 int phase[NUM_INCR+1];
 
 bool cal_flag = 1;	// testing, set it to TRUE
+bool mux_flag = 1;	// select ch1/2
+
+// define pin here			// ch0	-> (S2,S1,S0) = (0,0,0)
+int PIN_S0 = 32;			// ch1	-> (S2,S1,S0) = (0,0,1)
+int PIN_S1 = 33;			// ch2	-> (S2,S1,S0) = (0,1,0)
 
 // define struct here
 // struct to store internal factor
@@ -51,7 +56,7 @@ struct struct_data {
 
 // store data of body composition
 struct struct_body_composition {
-	int weight = 57;
+	int weight = 57;		// default value for testing
 	int height = 169;
 	int age = 21;
 	int gender = 1;
@@ -67,6 +72,8 @@ struct struct_body_composition {
 
 
 // define function here
+void change_pin_condition(int PIN_S0, int PIN_S1);
+void set_pinmode(int PIN_S0, int PIN_S1);
 float calculate_phase(int real, int imag);
 void store_sampling(int freq, float impedance, float phase, struct_data *data, int idx);
 void consider_internal_factor(struct_data *data, struct_internal_factor *internal, int idx);
@@ -92,6 +99,9 @@ void setup() {
 	Serial.begin(9600);
 	Serial.println("AD5933 Test Started!");
 
+	// set pinmode here
+	set_pinmode(PIN_S0, PIN_S1);
+
 	// Perform initial configuration. Fail if any one of these fail.
 	if (!(AD5933::reset() &&
 		AD5933::setInternalClock(true) &&
@@ -101,14 +111,13 @@ void setup() {
 		AD5933::setPGAGain(PGA_GAIN_X1))) {
 			Serial.println("FAILED in initialization!");
 			while (true);	// if its failed, infinite loop
-		}
+	}
 
 	// Perform calibration sweep
 	if (AD5933::calibrate(gain, phase, REF_RESIST, NUM_INCR+1)) {
 		// in calibration process, i need to store first sweep data using RCAL
 		// i want to store it to struct internal_factor
-		// first_sweep_to_store_internal_factor();
-		frequency_sweep_real_time();
+		frequency_sweep_real_time();	// in the end, cal_flag will changed to 0
 		Serial.println("Calibrated!");
 	}
 	else {
@@ -132,6 +141,35 @@ void loop() {
 
 
 // source of function is here
+
+// setting pin S0 S1 condition
+void change_pin_condition(int PIN_S0, int PIN_S1) {
+	// mux_flag chose channel 1 or channel 2
+	if (mux_flag && !cal_flag) {		// for ch 1
+		digitalWrite(PIN_S0, HIGH);
+		digitalWrite(PIN_S1, LOW);
+	}
+	else if (!mux_flag && !cal_flag) {	// for ch 2
+		digitalWrite(PIN_S0, LOW);
+		digitalWrite(PIN_S1, HIGH);
+	}
+	else if (cal_flag) {				// for ch 0 -> calibration
+		digitalWrite(PIN_S0, LOW);
+		digitalWrite(PIN_S1, LOW);
+	}
+}
+
+
+// setting pinmode in setup
+void set_pinmode(int PIN_S0, int PIN_S1) {
+	pinMode(PIN_S0, OUTPUT);
+	pinMode(PIN_S1, OUTPUT);
+	change_pin_condition(PIN_S0, PIN_S1);
+}
+
+
+//
+
 
 // to calculate phase related to its quadrant position
 float calculate_phase(int real, int imag) {
@@ -352,8 +390,7 @@ void frequency_sweep_real_time() {
 		}
 
 	// print what next to do
-	if (cal_flag == 1) Serial.print("Sweep frequency & store internal factor ... ");
-	else Serial.print("Sweep frequency ... ");
+	Serial.println("Sweep frequency ... ");
 	// Perform the actual sweep
 	while ((AD5933::readStatusRegister() & STATUS_SWEEP_DONE) != STATUS_SWEEP_DONE) {
 		// Get the frequency data for this frequency point
@@ -367,7 +404,7 @@ void frequency_sweep_real_time() {
 		float phase = calculate_phase(real, imag);
 		
 		// if in calibration process
-		if (cal_flag == 1) {
+		if (cal_flag) {
 			// in calibration process, i need to store delta_z & delta_phase
 			store_internal_factor(impedance, phase, &internal_factor, i);
 
@@ -385,6 +422,9 @@ void frequency_sweep_real_time() {
 			consider_internal_factor(&data_retrieval, &internal_factor, i);
 
 			// Print out the frequency data
+			// i dont need to change print variable using corrected value from data_retrieval
+			// cause this will be used in collecting data for training process
+			// corrected value used in process_analysis()
 			Serial.print(cfreq);
 			Serial.print(", ");
 			Serial.print(impedance);
@@ -403,11 +443,15 @@ void frequency_sweep_real_time() {
 		cfreq += FREQ_INCR;
 		AD5933::setControlMode(CTRL_INCREMENT_FREQ);
 	}
-	Serial.println("Done");
 
 	
 	// process analysis here
-	if (cal_flag == 0) {
+	if (cal_flag) {
+		Serial.println("Sweep frequency & store internal factor ... Done");
+		cal_flag = 0;
+	}
+	else {
+		Serial.println("Frequency sweep complete!");
 		process_analysis(&data_retrieval, &body_composition);
 		debug_print();
 	}
