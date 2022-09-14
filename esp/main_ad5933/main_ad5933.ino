@@ -77,6 +77,7 @@ void change_pin_condition(int PIN_S0, int PIN_S1);
 void set_pinmode(int PIN_S0, int PIN_S1);
 float calculate_phase(int real, int imag);
 void store_sampling(int freq, float impedance, float phase, struct_data *data, int idx);
+void read_trigger_cal_flag();
 void consider_internal_factor(struct_data *data, struct_internal_factor *internal, int idx);
 float get_data_mid(float arr[], int length);
 float get_data_median(float arr[], int length);
@@ -88,7 +89,6 @@ float calculate_tbw(float ffm, float percentage);
 float calculate_percentage(float ref, float value);
 void process_analysis(struct_data *data, struct_body_composition *body);
 void debug_print();
-void frequency_sweep_easy();
 void frequency_sweep_real_time();
 
 
@@ -217,6 +217,12 @@ void store_sampling(int freq, float impedance, float phase, struct_data *data, i
 void store_internal_factor(float impedance, float phase, struct_internal_factor *internal, int idx) {
 	(*internal).delta_z[idx] = impedance - (*internal).z_cal;
 	(*internal).delta_phase[idx] = phase - (*internal).phase_cal;
+}
+
+
+// read trigger calibration flag. can be from button in mobile app
+void read_trigger_cal_flag(){
+
 }
 
 
@@ -388,6 +394,9 @@ void frequency_sweep_real_time() {
 		float impedance = 1/(magnitude*gain[i]);
 		float phase = calculate_phase(real, imag);
 		
+		// standby to read trigger of calibration_flag. button/input from mobile app
+		read_trigger_cal_flag();
+
 		// if in calibration process
 		if (cal_flag) {
 			// in calibration process, i need to store delta_z & delta_phase
