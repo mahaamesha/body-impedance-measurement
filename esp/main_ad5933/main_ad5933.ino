@@ -7,7 +7,7 @@
 #include <AD5933.h>
 #include <cmath>
 #include <bits/stdc++.h>	// for function: sort()
-
+ 
 using namespace std;
 
 #define START_FREQ  (20000)
@@ -56,10 +56,10 @@ struct struct_data {
 
 // store data of body composition
 struct struct_body_composition {
-	int weight = 57;		// default value for testing
-	int height = 169;
-	int age = 21;
-	int gender = 1;
+	int weight;
+	int height;
+	int age;
+	int gender;
 
 	float impedance;
 	float ffm;
@@ -72,6 +72,7 @@ struct struct_body_composition {
 
 
 // define function here
+void check_inizialization_ad5933();
 void change_pin_condition(int PIN_S0, int PIN_S1);
 void set_pinmode(int PIN_S0, int PIN_S1);
 float calculate_phase(int real, int imag);
@@ -110,6 +111,7 @@ void setup() {
 		AD5933::setNumberIncrements(NUM_INCR) &&
 		AD5933::setPGAGain(PGA_GAIN_X1))) {
 			Serial.println("FAILED in initialization!");
+			check_inizialization_ad5933();
 			while (true);	// if its failed, infinite loop
 	}
 
@@ -118,14 +120,17 @@ void setup() {
 		// in calibration process, i need to store first sweep data using RCAL
 		// i want to store it to struct internal_factor
 		frequency_sweep_real_time();	// in the end, cal_flag will changed to 0
-		Serial.println("Calibrated!");
+		Serial.println("Calibrated!\n");
 	}
 	else {
-		Serial.println("Calibration failed...");
+		Serial.println("Calibration failed...\n");
 	}
 }
 
 void loop() {
+	// ask input anthropometry data
+	input_anthropometry(&body_composition);
+
 	// Easy to use method for frequency sweep
 	// frequency_sweep_easy();
 
@@ -136,11 +141,20 @@ void loop() {
 	// internal factor and model need to stored when calibration
 
 
-	delay(3000);
+	delay(500);
 }
 
 
 // source of function is here
+void check_inizialization_ad5933() {
+	if (! AD5933::reset()) Serial.println("Failed: Reset AD5933");
+	if (! AD5933::setInternalClock(true)) Serial.println("Failed: Set internal clock");
+	if (! AD5933::setStartFrequency(START_FREQ)) Serial.println("Failed: Set start frequency");
+	if (! AD5933::setIncrementFrequency(FREQ_INCR)) Serial.println("Failed: Set increment frequency");
+	if (! AD5933::setNumberIncrements(NUM_INCR)) Serial.println("Failed: Set number increment");
+	if (! AD5933::setPGAGain(PGA_GAIN_X1)) Serial.println("Failed: Set PGA Gain x1");
+}
+
 
 // setting pin S0 S1 condition
 void change_pin_condition(int PIN_S0, int PIN_S1) {
@@ -168,7 +182,14 @@ void set_pinmode(int PIN_S0, int PIN_S1) {
 }
 
 
-//
+// input anthropometry data
+// change this function when mobile app already builded
+void input_anthropometry(struct_body_composition *body) {
+	(*body).weight = 57;		// default value for testing
+	(*body).height = 169;		// later I will ask input from application
+	(*body).age = 21;
+	(*body).gender = 1;
+}
 
 
 // to calculate phase related to its quadrant position
@@ -339,42 +360,6 @@ void debug_print() {
 }
 
 
-// Easy way to do a frequency sweep. Does an entire frequency sweep at once and
-// stores the data into arrays for processing afterwards. This is easy-to-use,
-// but doesn't allow you to process data in real time.
-void frequency_sweep_easy() {
-	// Create arrays to hold the data
-	int real[NUM_INCR+1], imag[NUM_INCR+1];
-
-	// Perform the frequency sweep
-	if (AD5933::frequencySweep(real, imag, NUM_INCR+1)) {
-		// Print the frequency data
-		int cfreq = START_FREQ;
-		for (int i = 0; i < NUM_INCR+1; i++, cfreq += FREQ_INCR) {
-			// Compute impedance
-			float magnitude = sqrt(pow(real[i], 2) + pow(imag[i], 2));
-			float impedance = 1/(magnitude*gain[i]);
-			float phase = calculate_phase(real[i], imag[i]);
-
-			// Print raw frequency data
-			Serial.print(cfreq);
-			Serial.print(", ");
-			Serial.print(impedance);
-			Serial.print(", ");
-			Serial.print(phase);
-			Serial.print(", ");
-			Serial.print(real[i]);
-			Serial.print(", ");
-			Serial.print(imag[i]);
-			Serial.print(", ");
-			Serial.println(magnitude);
-		}
-		Serial.println("Frequency sweep complete!");
-	} else {
-		Serial.println("Frequency sweep failed...");
-	}
-}
-
 // Removes the frequencySweep abstraction from above. This saves memory and
 // allows for data to be processed in real time. However, it's more complex.
 void frequency_sweep_real_time() {
@@ -390,7 +375,7 @@ void frequency_sweep_real_time() {
 		}
 
 	// print what next to do
-	Serial.println("Sweep frequency ... ");
+	// Serial.println("Sweep frequency ... ");
 	// Perform the actual sweep
 	while ((AD5933::readStatusRegister() & STATUS_SWEEP_DONE) != STATUS_SWEEP_DONE) {
 		// Get the frequency data for this frequency point
@@ -453,7 +438,7 @@ void frequency_sweep_real_time() {
 	else {
 		Serial.println("Frequency sweep complete!");
 		process_analysis(&data_retrieval, &body_composition);
-		debug_print();
+		// debug_print();
 	}
 
 
