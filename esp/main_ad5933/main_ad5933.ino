@@ -106,7 +106,7 @@ void setup() {
 	pinMode(PIN_S0, OUTPUT);	// to control mux channel
 	pinMode(PIN_S1, OUTPUT);	// to control mux channel
 
-	// check cal_flag' trigger. can be from mobile app/button
+	// set cal_flag from input serial. For future, it can be from mobile app
 	cal_flag = set_cal_flag(cal_flag);
 }
 
@@ -114,7 +114,7 @@ void loop() {
 	// ask input anthropometry data
 	if (!cal_flag) input_anthropometry(&body_composition);
 
-	// switch channel based on pin condition
+	// switch channel based on pin condition. when calibration: CH0 is active
 	switch_channel(PIN_S0, PIN_S1);
 
 	// complex but more robust method for frequency sweep
@@ -173,17 +173,17 @@ void switch_channel(int PIN_S0, int PIN_S1) {
 	if (mux_flag && !cal_flag) {		// for ch 1
 		digitalWrite(PIN_S0, HIGH);
 		digitalWrite(PIN_S1, LOW);
-		// Serial.println("Channel 1 active -> (S0,S1) = (1,0)");
+		Serial.println("Channel 1 active -> (S0,S1) = (1,0)");
 	}
 	else if (!mux_flag && !cal_flag) {	// for ch 2
 		digitalWrite(PIN_S0, LOW);
 		digitalWrite(PIN_S1, HIGH);
-		// Serial.println("Channel 2 active -> (S0,S1) = (0,1)");
+		Serial.println("Channel 2 active -> (S0,S1) = (0,1)");
 	}
 	else if (cal_flag) {				// for ch 0 -> calibration. connected with 1k ohm
 		digitalWrite(PIN_S0, LOW);
 		digitalWrite(PIN_S1, LOW);
-		// Serial.println("Channel 0 active -> (S0,S1) = (0,0)");
+		Serial.println("Channel 0 active -> (S0,S1) = (0,0)");
 	}
 }
 
@@ -213,12 +213,6 @@ void input_anthropometry(struct_body_composition *body) {
 	(*body).height = h;
 	(*body).age = y;
 	(*body).gender = s;
-}
-
-
-// read trigger calibration flag. can be from button in mobile app
-void read_trigger_cal_flag(){
-
 }
 
 
@@ -417,9 +411,6 @@ void frequency_sweep_real_time() {
 		float magnitude = sqrt(pow(real, 2) + pow(imag, 2));
 		float impedance = 1/(magnitude*gain[i]);
 		float phase = calculate_phase(real, imag);
-		
-		// standby to read trigger of calibration_flag. button/input from mobile app
-		read_trigger_cal_flag();
 
 		// if in calibration process
 		if (cal_flag) {
@@ -461,12 +452,11 @@ void frequency_sweep_real_time() {
 		cfreq += FREQ_INCR;
 		AD5933::setControlMode(CTRL_INCREMENT_FREQ);
 	}
-	// end of while loop
 
 	
-	// after sampling
+	// outside while loop
 	if (cal_flag) {		// if cal_flag is true, then turn it into false
-		Serial.println("Sweep frequency & store internal factor ... Done");
+		Serial.println("Sweep frequency & store internal factor ... Done\n");
 		cal_flag = 0;
 	}
 	else {		// process analysis here
