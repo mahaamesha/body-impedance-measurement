@@ -18,10 +18,10 @@ using namespace std;
 double gain[NUM_INCR+1];	// should double
 int phase[NUM_INCR+1];
 
-bool cal_flag = 1;	// testing, set it to TRUE
-bool mux_flag = 1;	// select ch1/2
+bool cal_flag = 0;	// testing, set it to TRUE
+bool mux_flag = 0;	// select ch1/2
 
-// define pin here			// ch0	-> (S2,S1,S0) = (0,0,0)
+// define pin here			// ch0	-> (S2,S1,S0) = (0,0,0)		for calibration
 int PIN_S0 = 32;			// ch1	-> (S2,S1,S0) = (0,0,1)
 int PIN_S1 = 33;			// ch2	-> (S2,S1,S0) = (0,1,0)
 
@@ -72,24 +72,24 @@ struct struct_body_composition {
 
 
 // define function here
-void check_inizialization_ad5933();
-void change_pin_condition(int PIN_S0, int PIN_S1);
-void set_pinmode(int PIN_S0, int PIN_S1);
-float calculate_phase(int real, int imag);
-void store_sampling(int freq, float impedance, float phase, struct_data *data, int idx);
-void read_trigger_cal_flag();
-void consider_internal_factor(struct_data *data, struct_internal_factor *internal, int idx);
-float get_data_mid(float arr[], int length);
-float get_data_median(float arr[], int length);
-float calculate_r(float z, float phase);
-float calculate_c(float z, float phase, float f);
-float calculate_ffm(int w, int h, float z, int y, int s);
-float calculate_fm(int w, float ffm);
-float calculate_tbw(float ffm, float percentage);
-float calculate_percentage(float ref, float value);
-void process_analysis(struct_data *data, struct_body_composition *body);
-void debug_print();
-void frequency_sweep_real_time();
+// void init_ad5933();
+// void check_inizialization_ad5933();
+// void change_pin_condition(int PIN_S0, int PIN_S1);
+// float calculate_phase(int real, int imag);
+// void store_sampling(int freq, float impedance, float phase, struct_data *data, int idx);
+// void read_trigger_cal_flag();
+// void consider_internal_factor(struct_data *data, struct_internal_factor *internal, int idx);
+// float get_data_mid(float arr[], int length);
+// float get_data_median(float arr[], int length);
+// float calculate_r(float z, float phase);
+// float calculate_c(float z, float phase, float f);
+// float calculate_ffm(int w, int h, float z, int y, int s);
+// float calculate_fm(int w, float ffm);
+// float calculate_tbw(float ffm, float percentage);
+// float calculate_percentage(float ref, float value);
+// void process_analysis(struct_data *data, struct_body_composition *body);
+// void debug_print();
+// void frequency_sweep_real_time();
 
 
 void setup() {
@@ -98,48 +98,30 @@ void setup() {
 
 	// Begin serial at 9600 baud for output
 	Serial.begin(9600);
-	Serial.println("AD5933 Test Started!");
+	
+	// initialize AD5933
+	init_ad5933();
 
 	// set pinmode here
-	set_pinmode(PIN_S0, PIN_S1);
+	pinMode(PIN_S0, OUTPUT);	// to control mux channel
+	pinMode(PIN_S1, OUTPUT);	// to control mux channel
 
-	// Perform initial configuration. Fail if any one of these fail.
-	if (!(AD5933::reset() &&
-		AD5933::setInternalClock(true) &&
-		AD5933::setStartFrequency(START_FREQ) &&
-		AD5933::setIncrementFrequency(FREQ_INCR) &&
-		AD5933::setNumberIncrements(NUM_INCR) &&
-		AD5933::setPGAGain(PGA_GAIN_X1))) {
-			Serial.println("FAILED in initialization!");
-			check_inizialization_ad5933();
-			while (true);	// if its failed, infinite loop
-	}
-
-	// Perform calibration sweep
-	if (AD5933::calibrate(gain, phase, REF_RESIST, NUM_INCR+1)) {
-		// in calibration process, i need to store first sweep data using RCAL
-		// i want to store it to struct internal_factor
-		frequency_sweep_real_time();	// in the end, cal_flag will changed to 0
-		Serial.println("Calibrated!\n");
-	}
-	else {
-		Serial.println("Calibration failed...\n");
-	}
+	// check cal_flag' trigger. can be from mobile app/button
+	cal_flag = set_cal_flag(cal_flag);
 }
 
 void loop() {
 	// ask input anthropometry data
 	input_anthropometry(&body_composition);
 
-	// Easy to use method for frequency sweep
-	// frequency_sweep_easy();
+	// switch channel based on pin condition
+	switch_channel(PIN_S0, PIN_S1);
 
-	// Complex but more robust method for frequency sweep
+	// complex but more robust method for frequency sweep
 	frequency_sweep_real_time();
 
 	// process analysis
 	// internal factor and model need to stored when calibration
-
 
 	delay(500);
 }
@@ -156,29 +138,54 @@ void check_inizialization_ad5933() {
 }
 
 
+// Perform initial configuration. Fail if any one of these fail.
+void init_ad5933(){
+	if (!(AD5933::reset() &&
+		AD5933::setInternalClock(true) &&
+		AD5933::setStartFrequency(START_FREQ) &&
+		AD5933::setIncrementFrequency(FREQ_INCR) &&
+		AD5933::setNumberIncrements(NUM_INCR) &&
+		AD5933::setPGAGain(PGA_GAIN_X1))) {
+			Serial.println("FAILED in initialization!");
+			check_inizialization_ad5933();		// check falilure in initialization process
+			while (true);	// if its failed, infinite loop
+	}
+	else Serial.println("\n\nSuccess initialize AD5933!\n");
+}
+
+
+bool set_cal_flag(bool cal_flag) {
+	Serial.print("Input calibration flag (1/0) : ");
+    
+	while (Serial.available() == 0) {}		// waiting input
+    char val = Serial.read();
+	Serial.println(val);
+	
+	if (val == '1') cal_flag = 1;
+	else if (val == '0') cal_flag = 0;
+
+	return cal_flag;
+}
+
+
 // setting pin S0 S1 condition
-void change_pin_condition(int PIN_S0, int PIN_S1) {
+void switch_channel(int PIN_S0, int PIN_S1) {
 	// mux_flag chose channel 1 or channel 2
 	if (mux_flag && !cal_flag) {		// for ch 1
 		digitalWrite(PIN_S0, HIGH);
 		digitalWrite(PIN_S1, LOW);
+		// Serial.println("Channel 1 active -> (S0,S1) = (1,0)");
 	}
 	else if (!mux_flag && !cal_flag) {	// for ch 2
 		digitalWrite(PIN_S0, LOW);
 		digitalWrite(PIN_S1, HIGH);
+		// Serial.println("Channel 2 active -> (S0,S1) = (0,1)");
 	}
-	else if (cal_flag) {				// for ch 0 -> calibration
+	else if (cal_flag) {				// for ch 0 -> calibration. connected with 1k ohm
 		digitalWrite(PIN_S0, LOW);
 		digitalWrite(PIN_S1, LOW);
+		// Serial.println("Channel 0 active -> (S0,S1) = (0,0)");
 	}
-}
-
-
-// setting pinmode in setup
-void set_pinmode(int PIN_S0, int PIN_S1) {
-	pinMode(PIN_S0, OUTPUT);
-	pinMode(PIN_S1, OUTPUT);
-	change_pin_condition(PIN_S0, PIN_S1);
 }
 
 
@@ -189,6 +196,12 @@ void input_anthropometry(struct_body_composition *body) {
 	(*body).height = 169;		// later I will ask input from application
 	(*body).age = 21;
 	(*body).gender = 1;
+}
+
+
+// read trigger calibration flag. can be from button in mobile app
+void read_trigger_cal_flag(){
+
 }
 
 
@@ -217,12 +230,6 @@ void store_sampling(int freq, float impedance, float phase, struct_data *data, i
 void store_internal_factor(float impedance, float phase, struct_internal_factor *internal, int idx) {
 	(*internal).delta_z[idx] = impedance - (*internal).z_cal;
 	(*internal).delta_phase[idx] = phase - (*internal).phase_cal;
-}
-
-
-// read trigger calibration flag. can be from button in mobile app
-void read_trigger_cal_flag(){
-
 }
 
 
@@ -437,17 +444,18 @@ void frequency_sweep_real_time() {
 		cfreq += FREQ_INCR;
 		AD5933::setControlMode(CTRL_INCREMENT_FREQ);
 	}
+	// end of while loop
 
 	
-	// process analysis here
-	if (cal_flag) {
+	// after sampling
+	if (cal_flag) {		// if cal_flag is true, then turn it into false
 		Serial.println("Sweep frequency & store internal factor ... Done");
 		cal_flag = 0;
 	}
-	else {
+	else {		// process analysis here
 		Serial.println("Frequency sweep complete!");
 		process_analysis(&data_retrieval, &body_composition);
-		// debug_print();
+		// debug_print();		// for debugging result of processing
 	}
 
 
