@@ -112,7 +112,7 @@ void setup() {
 
 void loop() {
 	// ask input anthropometry data
-	input_anthropometry(&body_composition);
+	if (!cal_flag) input_anthropometry(&body_composition);
 
 	// switch channel based on pin condition
 	switch_channel(PIN_S0, PIN_S1);
@@ -156,7 +156,6 @@ void init_ad5933(){
 
 bool set_cal_flag(bool cal_flag) {
 	Serial.print("Input calibration flag (1/0) : ");
-    
 	while (Serial.available() == 0) {}		// waiting input
     char val = Serial.read();
 	Serial.println(val);
@@ -189,13 +188,31 @@ void switch_channel(int PIN_S0, int PIN_S1) {
 }
 
 
+int ask_integer_input_via_serial(String label) {
+	Serial.print("Input your " + label + "\t: ");
+	while(Serial.available() == 0) {}
+	int val = Serial.read();
+	Serial.println(val);
+	
+	return val;
+}
+
+
 // input anthropometry data
 // change this function when mobile app already builded
 void input_anthropometry(struct_body_composition *body) {
-	(*body).weight = 57;		// default value for testing
-	(*body).height = 169;		// later I will ask input from application
-	(*body).age = 21;
-	(*body).gender = 1;
+	// default value
+	int w=57, h=169, y=21, s=1;
+
+	w = ask_integer_input_via_serial("WEIGHT");
+	h = ask_integer_input_via_serial("HEIGHT");
+	y = ask_integer_input_via_serial("AGE   ");
+	s = ask_integer_input_via_serial("GENDER");
+
+	(*body).weight = w;
+	(*body).height = h;
+	(*body).age = y;
+	(*body).gender = s;
 }
 
 
