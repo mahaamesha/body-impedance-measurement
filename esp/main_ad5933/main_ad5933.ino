@@ -399,7 +399,7 @@ void frequency_sweep_real_time() {
 		}
 
 	// print what next to do
-	// Serial.println("Sweep frequency ... ");
+	Serial.println("Sweep frequency ... ");
 	// Perform the actual sweep
 	while ((AD5933::readStatusRegister() & STATUS_SWEEP_DONE) != STATUS_SWEEP_DONE) {
 		// Get the frequency data for this frequency point
@@ -460,9 +460,9 @@ void frequency_sweep_real_time() {
 		cal_flag = 0;
 	}
 	else {		// process analysis here
-		Serial.println("Frequency sweep complete!");
+		Serial.println("Frequency sweep complete!\n");
 		process_analysis(&data_retrieval, &body_composition);
-		// debug_print();		// for debugging result of processing
+		debug_print();		// for debugging result of processing
 	}
 
 

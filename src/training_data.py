@@ -264,7 +264,6 @@ def report_result(df, best_model_coef, best_model_r2,
 
 
 
-
 if __name__ == "__main__":
     folder_data_training_name = detect_folder_data_training(data_path)
     copy_all_files_to_data_training_folder(data_path, folder_data_training_name)

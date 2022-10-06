@@ -20,7 +20,8 @@ def send_serial_data(data, debug_flag=False, max_chr=16):
         for i in range(len(data_byte)):
             # read every character in data_byte. for debugging purpose
             incoming_byte = ser.readline()[:-2]     # format: b'49\r\n' --> b'49'
-            print("%s\t: %s" %(i, incoming_byte))
+            if int.from_bytes(incoming_byte, "big") >= 45 and int.from_bytes(incoming_byte, "big") <= 57:     # only "-" until "9"
+                print("%s\t: %s" %(i, incoming_byte))
 
 
 # i need to send data to arduino via serial: internal factor & model coefficient
@@ -42,7 +43,7 @@ def send_serial_internal_factor(file_path="tmp/training_internal_factor.json"):
 
 
 if __name__ == "__main__":
-    test_str = 2.1
+    test_str = 2.1763591420376414691
     send_serial_data(test_str, debug_flag=True)
 
     # send_serial_internal_factor()
